@@ -2,7 +2,12 @@
   "name": "capoeira-songbook-contributor",
   "version": "1.0.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "format": "prettier . --write"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "prettier": "^3.2.5"
   },
   "repository": {
     "type": "git",
