@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: S3 bucket to deploy lambdas
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: capoeira-songbook-contributor-lambda-deployment-3bbba9bd-628a
+      AccessControl: Private
+Outputs:
+  DeploymentBucket:
+    Description: Bucket used for uploading lambda zip files
+    Value: !Ref S3Bucket
+    Export:
+      Name: DeploymentBucket

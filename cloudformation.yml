@@ -1,18 +1,19 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  LambdaS3Key:
+    Type: String
 Resources:
   NewSongFunction:
     Type: AWS::Lambda::Function
     Properties:
+      Handler: new-song.handler
       Code:
-        ZipFile: |
-          exports.handler = async (event) => {
-            return {
-              isBase64Encoded: false,
-              statusCode:      200,
-              headers:         { "content-type": "text/plain"},
-              body:            "Hello World! Test"
-            }
-          }
-      Handler: index.handler
+        S3Bucket: !ImportValue DeploymentBucket
+        S3Key: !Ref LambdaS3Key
+      Layers:
+        - arn:aws:lambda:eu-west-2:553035198032:layer:git-lambda2:8
+      Timeout: 20
       Role: !GetAtt NewSongFunctionRole.Arn
       Runtime: nodejs20.x
 

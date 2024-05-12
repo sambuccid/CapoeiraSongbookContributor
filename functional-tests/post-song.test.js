@@ -1,4 +1,4 @@
-const API_URL = "https://nizl5459mi.execute-api.eu-west-2.amazonaws.com";
+const API_URL = "https://huhwadu4w4.execute-api.eu-west-2.amazonaws.com";
 const ENDPOINT = "song";
 describe("POST /song", () => {
   const endpoint_url = `${API_URL}/${ENDPOINT}`;
@@ -10,6 +10,6 @@ describe("POST /song", () => {
     const respStatus = response.status;
 
     expect(respStatus).toBe(200);
-    expect(respData).toBe("Hello World! Test");
-  });
+    expect(respData).toBe("Hello World! Test2");
+  }, 10000);
 });

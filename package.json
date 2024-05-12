@@ -2,8 +2,10 @@
   "name": "capoeira-songbook-contributor",
   "version": "1.0.0",
   "scripts": {
-    "test": "jest",
+    "func-test": "jest",
     "format": "prettier . --write"
+  },
+  "dependencies": {
   },
   "devDependencies": {
     "jest": "^29.7.0",
