@@ -1,6 +1,6 @@
 import { spawnSync } from "child_process";
 import fs from "fs/promises";
-// const { Octokit } = require("octokit");
+import { Octokit } from "octokit";
 import { decryptText } from "./lib/encryptDecrypt.js";
 import { GitClient, executeGitCommand } from "./lib/git-client.js";
 
@@ -12,10 +12,36 @@ const REPO_NAME = "CapoeiraSongbook";
 const REPO_URL = "https://github.com/CortinaCapoeira/CapoeiraSongbook.git";
 const AUTH_REPO_URL = `https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/CortinaCapoeira/CapoeiraSongbook.git`;
 
+const octokit = new Octokit({
+  auth: GITHUB_PASSWORD,
+});
+
 export const handler = async (event) => {
   // TODO if(`/tmp/${REPO_NAME}` exists){ git checkout main && git pull}
 
   const requestBody = decryptText(PRIVATE_KEY, event.body);
+
+  const aRepo = await octokit.request("GET /repos/{owner}/{repo}", {
+    owner: "sambuccid",
+    repo: "hulipaa",
+    headers: {
+      "x-github-api-version": "2022-11-28",
+    },
+  });
+  console.log(aRepo);
+
+  const aCommit = await octokit.request(
+    "GET /repos/{owner}/{repo}/commits/{ref}/status",
+    {
+      owner: "sambuccid",
+      repo: "CapoeiraSongbookContributor",
+      ref: "501517fd54115faf256ca123ea77f47ca90758f4",
+      headers: {
+        "x-github-api-version": "2022-11-28",
+      },
+    }
+  );
+  console.log(aCommit);
 
   const clone = spawnSync("git", ["clone", REPO_URL], {
     cwd: "/tmp",
