@@ -28,6 +28,7 @@ get_deployment_bucket() {
 
 echo "Installing non-dev dependencies to be deployed"
 install_npm_dependencies
+cp ./package.json ./lambdas/package.json
 
 echo "Packaging lambdas in $PACKAGE_FILE_NAME"
 package_in_zip_file
@@ -39,6 +40,8 @@ aws s3 cp "./$PACKAGE_FILE_NAME" "s3://$DEPLOYMENT_BUCKET/"
 
 echo "Removing local lambda package"
 rm "./$PACKAGE_FILE_NAME"
+rm ./lambdas/package.json
+
 
 echo "$DEPLOYMENT_BUCKET" # Similar to return value
 echo "$PACKAGE_FILE_NAME" # Similar to return value

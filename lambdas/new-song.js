@@ -1,7 +1,8 @@
-const { spawnSync } = require("child_process");
-const fs = require("fs/promises");
-const { decryptText } = require("./lib/encryptDecrypt");
-const { GitClient, executeGitCommand } = require("./lib/git-client");
+import { spawnSync } from "child_process";
+import fs from "fs/promises";
+// const { Octokit } = require("octokit");
+import { decryptText } from "./lib/encryptDecrypt.js";
+import { GitClient, executeGitCommand } from "./lib/git-client.js";
 
 const CREDENTAIL_FILE = "/tmp/.my-credentials";
 const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
@@ -11,8 +12,7 @@ const REPO_NAME = "CapoeiraSongbook";
 const REPO_URL = "https://github.com/CortinaCapoeira/CapoeiraSongbook.git";
 const AUTH_REPO_URL = `https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/CortinaCapoeira/CapoeiraSongbook.git`;
 
-// TODO convert to ES module, easier to organise things
-exports.handler = async (event) => {
+export const handler = async (event) => {
   // TODO if(`/tmp/${REPO_NAME}` exists){ git checkout main && git pull}
 
   const requestBody = decryptText(PRIVATE_KEY, event.body);

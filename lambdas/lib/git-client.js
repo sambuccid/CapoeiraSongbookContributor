@@ -1,4 +1,4 @@
-const executeGitCommand = (folder, commandName, ...params) => {
+export const executeGitCommand = (folder, commandName, ...params) => {
   const commandParams = [commandName, ...params];
   const command = spawnSync("git", commandParams, {
     cwd: folder,
@@ -6,7 +6,7 @@ const executeGitCommand = (folder, commandName, ...params) => {
   console.log(`git ${commandName} ${params}` + command.output);
 };
 
-class GitClient {
+export class GitClient {
   #parentFolder;
   #repoName;
 
@@ -24,8 +24,3 @@ class GitClient {
 
   // TODO functions for clone, push, commit, add, ...
 }
-
-exports.handler = {
-  GitClient,
-  executeGitCommand,
-};

@@ -3,4 +3,4 @@ set -e
 
 aws cloudformation describe-stack-events \
   --stack-name capoeira-songbook-contributor \
-  | head -n 12
+  | head -n 11

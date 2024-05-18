@@ -1,5 +1,5 @@
-const fs = require("fs/promises");
-const { encryptText } = require("../lambdas/lib/encryptDecrypt");
+import fs from "fs/promises";
+import { encryptText } from "../lambdas/lib/encryptDecrypt.js";
 
 const API_URL = "https://huhwadu4w4.execute-api.eu-west-2.amazonaws.com";
 const ENDPOINT = "song";

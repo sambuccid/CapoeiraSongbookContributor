@@ -1,6 +1,6 @@
-const crypto = require("crypto");
+import crypto from "crypto";
 
-function encryptText(publicKey, plainText) {
+export function encryptText(publicKey, plainText) {
   return crypto
     .publicEncrypt(
       {
@@ -13,7 +13,7 @@ function encryptText(publicKey, plainText) {
     .toString("base64");
 }
 
-function decryptText(privateKey, encryptedText) {
+export function decryptText(privateKey, encryptedText) {
   return crypto
     .privateDecrypt(
       {
@@ -25,8 +25,3 @@ function decryptText(privateKey, encryptedText) {
     )
     .toString();
 }
-
-module.exports = {
-  encryptText,
-  decryptText,
-};
