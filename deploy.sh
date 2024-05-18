@@ -36,9 +36,12 @@ aws s3 cp "./$DEPLOYMENT_FILE_NAME" "s3://$DEPLOYMENT_BUCKET/"
 
 rm "./$DEPLOYMENT_FILE_NAME"
 
+GITHUB_USERNAME=$(<credentials/github_username.txt)
+GITHUB_PASSWORD=$(<credentials/github_personal_access_token.txt)
+
 aws cloudformation update-stack \
   --stack-name capoeira-songbook-contributor \
-  --parameters "ParameterKey=LambdaS3Key,ParameterValue=$DEPLOYMENT_FILE_NAME" \
+  --parameters "ParameterKey=LambdaS3Key,ParameterValue=$DEPLOYMENT_FILE_NAME" "ParameterKey=GithubUsername,ParameterValue=$GITHUB_USERNAME" "ParameterKey=GithubPassword,ParameterValue=$GITHUB_PASSWORD" \
   --template-body file://cloudformation.yml \
   --capabilities CAPABILITY_NAMED_IAM
 

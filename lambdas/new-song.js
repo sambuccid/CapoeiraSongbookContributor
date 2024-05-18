@@ -2,8 +2,12 @@ const { spawnSync } = require("child_process");
 const fs = require("fs/promises");
 const { GitClient, executeGitCommand } = require("./git-client");
 
+const CREDENTAIL_FILE = "/tmp/.my-credentials";
+const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
+const GITHUB_PASSWORD = process.env.GITHUB_PASSWORD;
 const REPO_NAME = "CapoeiraSongbook";
 const REPO_URL = "https://github.com/CortinaCapoeira/CapoeiraSongbook.git";
+const AUTH_REPO_URL = `https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/CortinaCapoeira/CapoeiraSongbook.git`;
 
 // TODO convert to ES module, easier to organise things
 exports.handler = async (event) => {
@@ -13,26 +17,36 @@ exports.handler = async (event) => {
   });
   console.log("CLONE:" + clone.output.toString());
 
-  // executeGitCommand("/tmp", "clone", REPO_URL);
-  // const git = new GitClient("/tmp", REPO_NAME);
+  const confStore = spawnSync(
+    "git",
+    ["config", "credential.helper", `store --file ${CREDENTAIL_FILE}`],
+    {
+      cwd: `/tmp/${REPO_NAME}`,
+    }
+  );
+  console.log("confStore:" + confStore.output.toString());
 
-  // TODO maybe try and change with a made up email and check if it's possible
+  await fs.writeFile(CREDENTAIL_FILE, AUTH_REPO_URL);
+
   const configEmail = spawnSync(
     "git",
-    ["config", "user.email", "sambuccid@gmail.com"],
+    ["config", "user.email", "songbook-contributor@a.com"],
     {
       cwd: `/tmp/${REPO_NAME}`,
     }
   );
   console.log("CONFIG EMAIL:" + configEmail.output.toString());
 
-  // TODO maybe try and change with a made up name and check if it's possible
-  const configName = spawnSync("git", ["config", "user.name", "sambuccid"], {
-    cwd: `/tmp/${REPO_NAME}`,
-  });
+  const configName = spawnSync(
+    "git",
+    ["config", "user.name", "Songbook-contributor"],
+    {
+      cwd: `/tmp/${REPO_NAME}`,
+    }
+  );
   console.log("CONFIG NAME:" + configName.output.toString());
 
-  const randomN = Math.random() * 1000;
+  const randomN = Math.floor(Math.random() * 1000); // TODO more random, otherwise small chance that just fails
   const branchName = `test-${randomN}`;
   const checkoutBranch = spawnSync("git", ["checkout", "-b", branchName], {
     cwd: `/tmp/${REPO_NAME}`,
@@ -69,6 +83,6 @@ exports.handler = async (event) => {
     isBase64Encoded: false,
     statusCode: 200,
     headers: { "content-type": "text/plain" },
-    body: JSON.stringify(files),
+    body: "Test",
   };
 };

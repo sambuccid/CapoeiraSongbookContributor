@@ -3,6 +3,10 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   LambdaS3Key:
     Type: String
+  GithubUsername:
+    Type: String
+  GithubPassword:
+    Type: String
 Resources:
   NewSongFunction:
     Type: AWS::Lambda::Function
@@ -16,6 +20,10 @@ Resources:
       Timeout: 20
       Role: !GetAtt NewSongFunctionRole.Arn
       Runtime: nodejs20.x
+      Environment:
+        Variables:
+          GITHUB_USERNAME: !Ref GithubUsername
+          GITHUB_PASSWORD: !Ref GithubPassword
 
   # Creates an HTTP API for our Lambda function.
   HttpApi:
