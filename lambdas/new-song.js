@@ -1,10 +1,12 @@
 const { spawnSync } = require("child_process");
 const fs = require("fs/promises");
-const { GitClient, executeGitCommand } = require("./git-client");
+const { decryptText } = require("./lib/encryptDecrypt");
+const { GitClient, executeGitCommand } = require("./lib/git-client");
 
 const CREDENTAIL_FILE = "/tmp/.my-credentials";
 const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
 const GITHUB_PASSWORD = process.env.GITHUB_PASSWORD;
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const REPO_NAME = "CapoeiraSongbook";
 const REPO_URL = "https://github.com/CortinaCapoeira/CapoeiraSongbook.git";
 const AUTH_REPO_URL = `https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/CortinaCapoeira/CapoeiraSongbook.git`;
@@ -12,6 +14,9 @@ const AUTH_REPO_URL = `https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/
 // TODO convert to ES module, easier to organise things
 exports.handler = async (event) => {
   // TODO if(`/tmp/${REPO_NAME}` exists){ git checkout main && git pull}
+
+  const requestBody = decryptText(PRIVATE_KEY, event.body);
+
   const clone = spawnSync("git", ["clone", REPO_URL], {
     cwd: "/tmp",
   });
@@ -83,6 +88,6 @@ exports.handler = async (event) => {
     isBase64Encoded: false,
     statusCode: 200,
     headers: { "content-type": "text/plain" },
-    body: "Test",
+    body: requestBody,
   };
 };

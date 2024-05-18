@@ -1,15 +1,25 @@
+const fs = require("fs/promises");
+const { encryptText } = require("../lambdas/lib/encryptDecrypt");
+
 const API_URL = "https://huhwadu4w4.execute-api.eu-west-2.amazonaws.com";
 const ENDPOINT = "song";
+
 describe("POST /song", () => {
   const endpoint_url = `${API_URL}/${ENDPOINT}`;
 
-  it("test runs", async () => {
-    const response = await fetch(endpoint_url, { method: "POST" });
+  it("returns the correct data", async () => {
+    const publicKey = await fs.readFile("./credentials/public_key.txt");
+    const message = encryptText(publicKey, "Some test data");
+
+    const response = await fetch(endpoint_url, {
+      method: "POST",
+      body: message,
+    });
 
     const respData = await response.text();
     const respStatus = response.status;
 
     expect(respStatus).toBe(200);
-    // expect(respData).toBe("Hello World! Test2");
+    expect(respData).toBe("Some test data");
   }, 25000);
 });

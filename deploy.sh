@@ -13,11 +13,12 @@ LAMBDA_PACKAGE_FILE_NAME=${PACKAGE_LAMBDA_OUTPUT[-1]}
 
 GITHUB_USERNAME=$(<credentials/github_username.txt)
 GITHUB_PASSWORD=$(<credentials/github_personal_access_token.txt)
+PRIVATE_KEY=$(<credentials/private_key.txt)
 
 echo "Updating cloudformation stack"
 aws cloudformation update-stack \
   --stack-name capoeira-songbook-contributor \
-  --parameters "ParameterKey=LambdaS3Key,ParameterValue=$LAMBDA_PACKAGE_FILE_NAME" "ParameterKey=GithubUsername,ParameterValue=$GITHUB_USERNAME" "ParameterKey=GithubPassword,ParameterValue=$GITHUB_PASSWORD" \
+  --parameters "ParameterKey=LambdaS3Key,ParameterValue=$LAMBDA_PACKAGE_FILE_NAME" "ParameterKey=GithubUsername,ParameterValue=$GITHUB_USERNAME" "ParameterKey=GithubPassword,ParameterValue=$GITHUB_PASSWORD" "ParameterKey=PrivateKey,ParameterValue=$PRIVATE_KEY" \
   --template-body file://cloudformation.yml \
   --capabilities CAPABILITY_NAMED_IAM
 
@@ -33,7 +34,7 @@ aws cloudformation update-stack \
 
 aws cloudformation describe-stack-events \
   --stack-name capoeira-songbook-contributor \
-  | head -n 13
+  | head -n 12
 
 
 # echo "API url:"

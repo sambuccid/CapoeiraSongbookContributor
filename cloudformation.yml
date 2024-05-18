@@ -7,6 +7,8 @@ Parameters:
     Type: String
   GithubPassword:
     Type: String
+  PrivateKey:
+    Type: String
 Resources:
   NewSongFunction:
     Type: AWS::Lambda::Function
@@ -24,6 +26,7 @@ Resources:
         Variables:
           GITHUB_USERNAME: !Ref GithubUsername
           GITHUB_PASSWORD: !Ref GithubPassword
+          PRIVATE_KEY: !Ref PrivateKey
 
   # Creates an HTTP API for our Lambda function.
   HttpApi:
