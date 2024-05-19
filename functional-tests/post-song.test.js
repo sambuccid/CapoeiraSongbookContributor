@@ -8,7 +8,7 @@ describe("POST /song", () => {
   const endpoint_url = `${API_URL}/${ENDPOINT}`;
 
   it("returns the correct data", async () => {
-    const publicKey = await fs.readFile("./credentials/public_key.txt");
+    const publicKey = await fs.readFile("./.credentials/public_key.txt");
     const message = encryptText(publicKey, "Some test data");
 
     const response = await fetch(endpoint_url, {
