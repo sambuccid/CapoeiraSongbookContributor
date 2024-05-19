@@ -5,21 +5,34 @@ import { decryptText } from "./lib/encryptDecrypt.js";
 import { GitClient, executeGitCommand } from "./lib/git-client.js";
 
 const CREDENTAIL_FILE = "/tmp/.my-credentials";
-const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
-const GITHUB_PASSWORD = process.env.GITHUB_PASSWORD;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const REPO_NAME = "CapoeiraSongbook";
 const REPO_URL = "https://github.com/CortinaCapoeira/CapoeiraSongbook.git";
-const AUTH_REPO_URL = `https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/CortinaCapoeira/CapoeiraSongbook.git`;
+const getAuthRepoUrl = (username, password) =>
+  `https://${username}:${password}@github.com/CortinaCapoeira/CapoeiraSongbook.git`;
 
 const octokit = new Octokit({
-  auth: GITHUB_PASSWORD,
+  auth: process.env.GITHUB_PASSWORD,
 });
 
-export const handler = async (event) => {
-  // TODO if(`/tmp/${REPO_NAME}` exists){ git checkout main && git pull}
+const ENV_VARS = {
+  GITHUB_USERNAME: process.env.GITHUB_USERNAME,
+  GITHUB_PASSWORD: process.env.GITHUB_PASSWORD,
+  PRIVATE_KEY: process.env.PRIVATE_KEY,
+};
+
+const DEPENDENCIES = {
+  octokit,
+};
+
+export const handler = (event) => actualHandler(event, ENV_VARS, DEPENDENCIES);
+
+export const actualHandler = async (event, envVars, dependencies) => {
+  const { GITHUB_USERNAME, GITHUB_PASSWORD, PRIVATE_KEY } = envVars;
+  const { octokit } = dependencies;
 
   const requestBody = decryptText(PRIVATE_KEY, event.body);
+
+  // TODO if(`/tmp/${REPO_NAME}` exists){ git checkout main && git pull}
 
   const aRepo = await octokit.request("GET /repos/{owner}/{repo}", {
     owner: "sambuccid",
@@ -39,7 +52,7 @@ export const handler = async (event) => {
       headers: {
         "x-github-api-version": "2022-11-28",
       },
-    },
+    }
   );
   console.log(aCommit);
 
@@ -53,18 +66,21 @@ export const handler = async (event) => {
     ["config", "credential.helper", `store --file ${CREDENTAIL_FILE}`],
     {
       cwd: `/tmp/${REPO_NAME}`,
-    },
+    }
   );
   console.log("confStore:" + confStore.output.toString());
 
-  await fs.writeFile(CREDENTAIL_FILE, AUTH_REPO_URL);
+  await fs.writeFile(
+    CREDENTAIL_FILE,
+    getAuthRepoUrl(GITHUB_USERNAME, GITHUB_PASSWORD)
+  );
 
   const configEmail = spawnSync(
     "git",
     ["config", "user.email", "songbook-contributor@a.com"],
     {
       cwd: `/tmp/${REPO_NAME}`,
-    },
+    }
   );
   console.log("CONFIG EMAIL:" + configEmail.output.toString());
 
@@ -73,7 +89,7 @@ export const handler = async (event) => {
     ["config", "user.name", "Songbook-contributor"],
     {
       cwd: `/tmp/${REPO_NAME}`,
-    },
+    }
   );
   console.log("CONFIG NAME:" + configName.output.toString());
 
@@ -86,7 +102,7 @@ export const handler = async (event) => {
 
   await fs.writeFile(
     `/tmp/${REPO_NAME}/abcd-test-file.txt`,
-    "a test of writing a file",
+    "a test of writing a file"
   );
 
   const add = spawnSync("git", ["add", "abcd-test-file.txt"], {
