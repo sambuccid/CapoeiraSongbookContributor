@@ -22,13 +22,16 @@ const ENV_VARS = {
 
 const DEPENDENCIES = {
   octokit,
+  spawnSync,
+  fs,
+  decryptText,
 };
 
 export const handler = (event) => actualHandler(event, ENV_VARS, DEPENDENCIES);
 
 export const actualHandler = async (event, envVars, dependencies) => {
   const { GITHUB_USERNAME, GITHUB_PASSWORD, PRIVATE_KEY } = envVars;
-  const { octokit } = dependencies;
+  const { octokit, spawnSync, fs, decryptText } = dependencies;
 
   const requestBody = decryptText(PRIVATE_KEY, event.body);
 
