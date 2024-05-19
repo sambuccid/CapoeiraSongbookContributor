@@ -39,7 +39,7 @@ export const handler = async (event) => {
       headers: {
         "x-github-api-version": "2022-11-28",
       },
-    }
+    },
   );
   console.log(aCommit);
 
@@ -53,7 +53,7 @@ export const handler = async (event) => {
     ["config", "credential.helper", `store --file ${CREDENTAIL_FILE}`],
     {
       cwd: `/tmp/${REPO_NAME}`,
-    }
+    },
   );
   console.log("confStore:" + confStore.output.toString());
 
@@ -64,7 +64,7 @@ export const handler = async (event) => {
     ["config", "user.email", "songbook-contributor@a.com"],
     {
       cwd: `/tmp/${REPO_NAME}`,
-    }
+    },
   );
   console.log("CONFIG EMAIL:" + configEmail.output.toString());
 
@@ -73,7 +73,7 @@ export const handler = async (event) => {
     ["config", "user.name", "Songbook-contributor"],
     {
       cwd: `/tmp/${REPO_NAME}`,
-    }
+    },
   );
   console.log("CONFIG NAME:" + configName.output.toString());
 
@@ -86,7 +86,7 @@ export const handler = async (event) => {
 
   await fs.writeFile(
     `/tmp/${REPO_NAME}/abcd-test-file.txt`,
-    "a test of writing a file"
+    "a test of writing a file",
   );
 
   const add = spawnSync("git", ["add", "abcd-test-file.txt"], {

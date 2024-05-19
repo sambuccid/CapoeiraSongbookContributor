@@ -8,7 +8,7 @@ export function encryptText(publicKey, plainText) {
         padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
         oaepHash: "sha256",
       },
-      Buffer.from(plainText)
+      Buffer.from(plainText),
     )
     .toString("base64");
 }
@@ -21,7 +21,7 @@ export function decryptText(privateKey, encryptedText) {
         padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
         oaepHash: "sha256",
       },
-      Buffer.from(encryptedText, "base64")
+      Buffer.from(encryptedText, "base64"),
     )
     .toString();
 }
