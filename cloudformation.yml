@@ -19,7 +19,7 @@ Resources:
         S3Key: !Ref LambdaS3Key
       Layers:
         - arn:aws:lambda:eu-west-2:553035198032:layer:git-lambda2:8
-      Timeout: 20
+      Timeout: 40
       Role: !GetAtt NewSongFunctionRole.Arn
       Runtime: nodejs20.x
       Environment:

@@ -33,7 +33,8 @@ export const actualHandler = async (event, envVars, dependencies) => {
   const { GITHUB_USERNAME, GITHUB_PASSWORD, PRIVATE_KEY } = envVars;
   const { octokit, spawnSync, fs, decryptText } = dependencies;
 
-  const requestBody = decryptText(PRIVATE_KEY, event.body);
+  const decryptedRequest = decryptText(PRIVATE_KEY, event.body);
+  const requestBody = JSON.parse(decryptedRequest);
 
   // TODO if(`/tmp/${REPO_NAME}` exists){ git checkout main && git pull}
 
@@ -118,21 +119,22 @@ export const actualHandler = async (event, envVars, dependencies) => {
   });
   console.log("COMMIT:" + commit.output.toString());
 
-  const push = spawnSync(
-    "git",
-    ["push", "--set-upstream", "origin", branchName],
-    {
-      cwd: `/tmp/${REPO_NAME}`,
-    }
-  );
-  console.log("PUSH:" + push.output.toString());
-
+  if (!requestBody.dryRun) {
+    const push = spawnSync(
+      "git",
+      ["push", "--set-upstream", "origin", branchName],
+      {
+        cwd: `/tmp/${REPO_NAME}`,
+      }
+    );
+    console.log("PUSH:" + push.output.toString());
+  }
   const files = await fs.readdir(`/tmp/${REPO_NAME}`);
 
   return {
     isBase64Encoded: false,
     statusCode: 200,
     headers: { "content-type": "text/plain" },
-    body: requestBody,
+    body: JSON.stringify(requestBody),
   };
 };

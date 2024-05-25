@@ -3,9 +3,15 @@ import crypto from "crypto";
 import { decryptText } from "../../lambdas/lib/encryptDecrypt.js";
 import { actualHandler as lambda } from "../../lambdas/new-song.js";
 
+function simulateEncrypt(text) {
+  return Buffer.from(text).toString("base64");
+}
 function createEvent(body) {
+  let processedBody = body ?? {};
+  processedBody = JSON.stringify(processedBody);
+  processedBody = simulateEncrypt(processedBody);
   return {
-    body: body ?? "",
+    body: processedBody,
   };
 }
 
@@ -34,7 +40,7 @@ describe("new-song", () => {
   beforeEach(() => {
     privateDecryptSpy = jest
       .spyOn(crypto, "privateDecrypt")
-      .mockReturnValue("");
+      .mockImplementation((key, buffer) => buffer);
     spawnSyncSpy.mockReturnValue({ output: "" });
   });
 
@@ -142,11 +148,20 @@ describe("new-song", () => {
         spawnSyncInRepoDirectory
       );
     });
+    it("doesn't push git branch when is executed as dryRun", async () => {
+      await execLambda(createEvent({ dryRun: true }));
+
+      expect(spawnSyncSpy).not.toHaveBeenCalledWith(
+        "git",
+        ["push", expect.anything(), expect.anything(), expect.anything()],
+        expect.anything()
+      );
+    });
   });
 
   describe("cryptography", () => {
     it("decrypts the data in input", async () => {
-      const event = createEvent("Encrypted test");
+      const event = createEvent({ prop: "Encrypted test" });
 
       const envVars = {
         PRIVATE_KEY: "test-private-key",
@@ -160,14 +175,14 @@ describe("new-song", () => {
           padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
           oaepHash: "sha256",
         },
-        Buffer.from("Encrypted test", "base64")
+        Buffer.from('{"prop":"Encrypted test"}')
       );
     });
   });
 
   describe("Response", () => {
     it("Returns correct data", async () => {
-      privateDecryptSpy.mockReturnValue("Test decrypted text");
+      privateDecryptSpy.mockReturnValue('{"text":"Test decrypted text"}');
 
       const returnValues = await execLambda();
 
@@ -175,7 +190,7 @@ describe("new-song", () => {
         isBase64Encoded: false,
         statusCode: 200,
         headers: { "content-type": "text/plain" },
-        body: "Test decrypted text",
+        body: '{"text":"Test decrypted text"}',
       });
     });
   });

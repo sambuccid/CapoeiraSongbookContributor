@@ -9,17 +9,21 @@ describe("POST /song", () => {
 
   it("returns the correct data", async () => {
     const publicKey = await fs.readFile("./.credentials/public_key.txt");
-    const message = encryptText(publicKey, "Some test data");
+    const requestBody = JSON.stringify({
+      dryRun: true,
+      testText: "Some test data",
+    });
+    const encryptedBody = encryptText(publicKey, requestBody);
 
     const response = await fetch(endpoint_url, {
       method: "POST",
-      body: message,
+      body: encryptedBody,
     });
 
     const respData = await response.text();
     const respStatus = response.status;
 
     expect(respStatus).toBe(200);
-    expect(respData).toBe("Some test data");
-  }, 25000);
+    expect(JSON.parse(respData)).toMatchObject({ testText: "Some test data" });
+  }, 40000);
 });
