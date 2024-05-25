@@ -3,9 +3,9 @@ import crypto from "crypto";
 import { decryptText } from "../../lambdas/lib/encryptDecrypt.js";
 import { actualHandler as lambda } from "../../lambdas/new-song.js";
 
-function createEvent() {
+function createEvent(body) {
   return {
-    body: "",
+    body: body ?? "",
   };
 }
 
@@ -23,9 +23,16 @@ describe("new-song", () => {
     decryptText, // Passing actual module
   };
   const testEnvVars = {};
+  const execLambda = async (event, envVars, dependencies) => {
+    if (!event) event = createEvent();
+    envVars = { ...testEnvVars, ...envVars };
+    dependencies = { ...testDependencies, ...dependencies };
+    return await lambda(event, envVars, dependencies);
+  };
 
+  let privateDecryptSpy;
   beforeEach(() => {
-    const privateDescriptSpy = jest
+    privateDecryptSpy = jest
       .spyOn(crypto, "privateDecrypt")
       .mockReturnValue("");
     spawnSyncSpy.mockReturnValue({ output: "" });
@@ -38,12 +45,6 @@ describe("new-song", () => {
     };
     const spawnSyncInRepoDirectory = {
       cwd: "/tmp/CapoeiraSongbook",
-    };
-    const execLambda = async (event, envVars, dependencies) => {
-      if (!event) event = createEvent();
-      if (!envVars) envVars = testEnvVars;
-      if (!dependencies) dependencies = testDependencies;
-      return await lambda(event, envVars, dependencies);
     };
     it("clones the CapoeiraSongbook repository", async () => {
       await execLambda();
@@ -143,7 +144,57 @@ describe("new-song", () => {
     });
   });
 
-  // TODO decrypts text correctly (maybe without using return value)
-  // TODO return value + return status code + any other return that we return
-  // TODO all octokit tests
+  describe("cryptography", () => {
+    it("decrypts the data in input", async () => {
+      const event = createEvent("Encrypted test");
+
+      const envVars = {
+        PRIVATE_KEY: "test-private-key",
+      };
+
+      await execLambda(event, envVars);
+
+      expect(privateDecryptSpy).toHaveBeenCalledWith(
+        {
+          key: "test-private-key",
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: "sha256",
+        },
+        Buffer.from("Encrypted test", "base64")
+      );
+    });
+  });
+
+  describe("Response", () => {
+    it("Returns correct data", async () => {
+      privateDecryptSpy.mockReturnValue("Test decrypted text");
+
+      const returnValues = await execLambda();
+
+      expect(returnValues).toMatchObject({
+        isBase64Encoded: false,
+        statusCode: 200,
+        headers: { "content-type": "text/plain" },
+        body: "Test decrypted text",
+      });
+    });
+  });
+
+  describe("Usage of Github API", () => {
+    it("gets the status of a commit in a private repo", async () => {
+      await execLambda();
+
+      expect(octokitSpy.request).toHaveBeenCalledWith(
+        "GET /repos/{owner}/{repo}/commits/{ref}/status",
+        {
+          owner: "sambuccid",
+          repo: "CapoeiraSongbookContributor",
+          ref: "501517fd54115faf256ca123ea77f47ca90758f4",
+          headers: {
+            "x-github-api-version": "2022-11-28",
+          },
+        }
+      );
+    });
+  });
 });
