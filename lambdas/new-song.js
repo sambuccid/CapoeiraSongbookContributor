@@ -2,7 +2,7 @@ import { spawnSync } from "child_process";
 import fs from "fs/promises";
 import { Octokit } from "octokit";
 import { decryptText } from "./lib/encryptDecrypt.js";
-import { GitClient, executeGitCommand } from "./lib/git-client.js";
+import { GitClient } from "./lib/git-client.js";
 
 const CREDENTAIL_FILE = "/tmp/.my-credentials";
 const REPO_NAME = "CapoeiraSongbook";
@@ -60,76 +60,34 @@ export const actualHandler = async (event, envVars, dependencies) => {
   );
   console.log(aCommit);
 
-  const clone = spawnSync("git", ["clone", REPO_URL], {
-    cwd: "/tmp",
-  });
-  console.log("CLONE:" + clone.output.toString());
+  const git = new GitClient(spawnSync, "/tmp", REPO_NAME, REPO_URL);
+  git.clone();
 
-  const confStore = spawnSync(
-    "git",
-    ["config", "credential.helper", `store --file ${CREDENTAIL_FILE}`],
-    {
-      cwd: `/tmp/${REPO_NAME}`,
-    }
-  );
-  console.log("confStore:" + confStore.output.toString());
+  git.config("credential.helper", `store --file ${CREDENTAIL_FILE}`);
 
   await fs.writeFile(
     CREDENTAIL_FILE,
     getAuthRepoUrl(GITHUB_USERNAME, GITHUB_PASSWORD)
   );
 
-  const configEmail = spawnSync(
-    "git",
-    ["config", "user.email", "songbook-contributor@a.com"],
-    {
-      cwd: `/tmp/${REPO_NAME}`,
-    }
-  );
-  console.log("CONFIG EMAIL:" + configEmail.output.toString());
-
-  const configName = spawnSync(
-    "git",
-    ["config", "user.name", "Songbook-contributor"],
-    {
-      cwd: `/tmp/${REPO_NAME}`,
-    }
-  );
-  console.log("CONFIG NAME:" + configName.output.toString());
+  git.config("user.email", "songbook-contributor@a.com");
+  git.config("user.name", "Songbook-contributor");
 
   const randomN = Math.floor(Math.random() * 1000); // TODO more random, otherwise small chance that just fails
   const branchName = `test-${randomN}`;
-  const checkoutBranch = spawnSync("git", ["checkout", "-b", branchName], {
-    cwd: `/tmp/${REPO_NAME}`,
-  });
-  console.log("CHECKOUT:" + checkoutBranch.output.toString());
+  git.checkoutBranch(branchName);
 
   await fs.writeFile(
     `/tmp/${REPO_NAME}/abcd-test-file.txt`,
     "a test of writing a file"
   );
 
-  const add = spawnSync("git", ["add", "abcd-test-file.txt"], {
-    cwd: `/tmp/${REPO_NAME}`,
-  });
-  console.log("ADD:" + add.output.toString());
-
-  const commit = spawnSync("git", ["commit", "-m", '"Add test file"'], {
-    cwd: `/tmp/${REPO_NAME}`,
-  });
-  console.log("COMMIT:" + commit.output.toString());
+  git.add("abcd-test-file.txt");
+  git.commit("Add test file");
 
   if (!requestBody.dryRun) {
-    const push = spawnSync(
-      "git",
-      ["push", "--set-upstream", "origin", branchName],
-      {
-        cwd: `/tmp/${REPO_NAME}`,
-      }
-    );
-    console.log("PUSH:" + push.output.toString());
+    git.push(branchName);
   }
-  const files = await fs.readdir(`/tmp/${REPO_NAME}`);
 
   return {
     isBase64Encoded: false,
