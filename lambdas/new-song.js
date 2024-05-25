@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import { Octokit } from "octokit";
 import { decryptText } from "./lib/encryptDecrypt.js";
 import { GitClient } from "./lib/git-client.js";
+import { GithubApi } from "./lib/github-api.js";
 
 const CREDENTAIL_FILE = "/tmp/.my-credentials";
 const REPO_OWNER = "CortinaCapoeira";
@@ -33,13 +34,14 @@ export const handler = (event) => actualHandler(event, ENV_VARS, DEPENDENCIES);
 export const actualHandler = async (event, envVars, dependencies) => {
   const { GITHUB_USERNAME, GITHUB_PASSWORD, PRIVATE_KEY } = envVars;
   const { octokit, spawnSync, fs, decryptText } = dependencies;
+  const git = new GitClient(spawnSync, "/tmp", REPO_NAME, REPO_URL);
+  const github = new GithubApi(octokit, REPO_OWNER, REPO_NAME);
 
   const decryptedRequest = decryptText(PRIVATE_KEY, event.body);
   const requestBody = JSON.parse(decryptedRequest);
 
   // TODO if(`/tmp/${REPO_NAME}` exists){ git checkout main && git pull}
 
-  const git = new GitClient(spawnSync, "/tmp", REPO_NAME, REPO_URL);
   git.clone();
 
   git.config("credential.helper", `store --file ${CREDENTAIL_FILE}`);
@@ -66,17 +68,11 @@ export const actualHandler = async (event, envVars, dependencies) => {
 
   if (!requestBody.dryRun) {
     git.push(branchName);
-    await octokit.request("POST /repos/{owner}/{repo}/pulls", {
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
-      title: "New song contribution",
-      body: "New song contributed via the app.",
-      head: branchName,
-      base: "main",
-      headers: {
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    });
+    await github.createPullRequest(
+      branchName,
+      "New song contribution",
+      "New song contributed via the app."
+    );
   }
 
   return {
