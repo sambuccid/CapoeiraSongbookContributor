@@ -5,6 +5,7 @@ import { decryptText } from "./lib/encryptDecrypt.js";
 import { GitClient } from "./lib/git-client.js";
 
 const CREDENTAIL_FILE = "/tmp/.my-credentials";
+const REPO_OWNER = "CortinaCapoeira";
 const REPO_NAME = "CapoeiraSongbook";
 const REPO_URL = "https://github.com/CortinaCapoeira/CapoeiraSongbook.git";
 const getAuthRepoUrl = (username, password) =>
@@ -38,28 +39,6 @@ export const actualHandler = async (event, envVars, dependencies) => {
 
   // TODO if(`/tmp/${REPO_NAME}` exists){ git checkout main && git pull}
 
-  const aRepo = await octokit.request("GET /repos/{owner}/{repo}", {
-    owner: "sambuccid",
-    repo: "hulipaa",
-    headers: {
-      "x-github-api-version": "2022-11-28",
-    },
-  });
-  console.log(aRepo);
-
-  const aCommit = await octokit.request(
-    "GET /repos/{owner}/{repo}/commits/{ref}/status",
-    {
-      owner: "sambuccid",
-      repo: "CapoeiraSongbookContributor",
-      ref: "501517fd54115faf256ca123ea77f47ca90758f4",
-      headers: {
-        "x-github-api-version": "2022-11-28",
-      },
-    }
-  );
-  console.log(aCommit);
-
   const git = new GitClient(spawnSync, "/tmp", REPO_NAME, REPO_URL);
   git.clone();
 
@@ -73,8 +52,8 @@ export const actualHandler = async (event, envVars, dependencies) => {
   git.config("user.email", "songbook-contributor@a.com");
   git.config("user.name", "Songbook-contributor");
 
-  const randomN = Math.floor(Math.random() * 1000); // TODO more random, otherwise small chance that just fails
-  const branchName = `test-${randomN}`;
+  const randomN = Math.floor(Math.random() * 10000000);
+  const branchName = `songbook-new-song-contribution-${randomN}`;
   git.checkoutBranch(branchName);
 
   await fs.writeFile(
@@ -87,6 +66,17 @@ export const actualHandler = async (event, envVars, dependencies) => {
 
   if (!requestBody.dryRun) {
     git.push(branchName);
+    await octokit.request("POST /repos/{owner}/{repo}/pulls", {
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      title: "New song contribution",
+      body: "New song contributed via the app.",
+      head: branchName,
+      base: "main",
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
   }
 
   return {

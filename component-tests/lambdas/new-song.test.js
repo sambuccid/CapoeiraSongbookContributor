@@ -104,7 +104,11 @@ describe("new-song", () => {
 
       expect(spawnSyncSpy).toHaveBeenCalledWith(
         "git",
-        ["checkout", "-b", expect.stringMatching(/^test-\d{1,4}$/)],
+        [
+          "checkout",
+          "-b",
+          expect.stringMatching(/^songbook-new-song-contribution-\d{1,7}$/),
+        ],
         spawnSyncInRepoDirectory
       );
     });
@@ -143,7 +147,7 @@ describe("new-song", () => {
           "push",
           "--set-upstream",
           "origin",
-          expect.stringMatching(/^test-\d{1,4}$/),
+          expect.stringMatching(/^songbook-new-song-contribution-\d{1,7}$/),
         ],
         spawnSyncInRepoDirectory
       );
@@ -196,19 +200,32 @@ describe("new-song", () => {
   });
 
   describe("Usage of Github API", () => {
-    it("gets the status of a commit in a private repo", async () => {
+    it("creates a pull request", async () => {
       await execLambda();
 
       expect(octokitSpy.request).toHaveBeenCalledWith(
-        "GET /repos/{owner}/{repo}/commits/{ref}/status",
+        "POST /repos/{owner}/{repo}/pulls",
         {
-          owner: "sambuccid",
-          repo: "CapoeiraSongbookContributor",
-          ref: "501517fd54115faf256ca123ea77f47ca90758f4",
+          owner: "CortinaCapoeira",
+          repo: "CapoeiraSongbook",
+          title: "New song contribution",
+          body: "New song contributed via the app.",
+          head: expect.stringMatching(
+            /^songbook-new-song-contribution-\d{1,7}$/
+          ),
+          base: "main",
           headers: {
-            "x-github-api-version": "2022-11-28",
+            "X-GitHub-Api-Version": "2022-11-28",
           },
         }
+      );
+    });
+    it("doesn't create a pull request if executed with dryRun", async () => {
+      await execLambda(createEvent({ dryRun: true }));
+
+      expect(octokitSpy.request).not.toHaveBeenCalledWith(
+        "POST /repos/{owner}/{repo}/pulls",
+        expect.anything()
       );
     });
   });
