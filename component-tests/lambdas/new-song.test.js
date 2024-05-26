@@ -29,12 +29,26 @@ describe("new-song", () => {
     decryptText, // Passing actual module
   };
   const testEnvVars = {};
+  const spawnSyncInTmpDirectory = {
+    cwd: "/tmp",
+  };
+  const spawnSyncInRepoDirectory = {
+    cwd: "/tmp/CapoeiraSongbook",
+  };
+  const defaultTestSong = {
+    title: "a test song",
+  };
   const execLambda = async (event, envVars, dependencies) => {
     if (!event) event = createEvent();
     envVars = { ...testEnvVars, ...envVars };
     dependencies = { ...testDependencies, ...dependencies };
     return await lambda(event, envVars, dependencies);
   };
+  const execLambdaWithBody = async (body, envVars, dependencies) =>
+    execLambda(createEvent(body), envVars, dependencies);
+
+  const execLambdaWithDefaultSong = async (envVars, dependencies) =>
+    execLambda(createEvent(defaultTestSong), envVars, dependencies);
 
   let privateDecryptSpy;
   beforeEach(() => {
@@ -44,16 +58,50 @@ describe("new-song", () => {
     spawnSyncSpy.mockReturnValue({ output: "" });
   });
 
+  describe("creation of new song file", () => {
+    it("creates new file for the song in the songs folder", async () => {
+      await execLambdaWithBody({ title: "Test Song 1" });
+
+      expect(fsSpy.writeFile).toHaveBeenCalledWith(
+        "/tmp/CapoeiraSongbook/_data/songs/test-song-1.json",
+        expect.anything(),
+        { flag: "wx" }
+      );
+    });
+    it("adds a new file to git stage", async () => {
+      await execLambdaWithBody({ title: "A new Test song" });
+
+      expect(spawnSyncSpy).toHaveBeenCalledWith(
+        "git",
+        ["add", "_data/songs/a-new-test-song.json"],
+        spawnSyncInRepoDirectory
+      );
+    });
+    it("appends suffix to title if file with same name exists", async () => {
+      fsSpy.writeFile.mockImplementation((fileName) => {
+        if (fileName.includes("song-with-test.json"))
+          return Promise.reject(new Error("File already exists"));
+      });
+
+      await execLambdaWithBody({ title: "song with test" });
+
+      expect(fsSpy.writeFile).toHaveBeenCalledWith(
+        "/tmp/CapoeiraSongbook/_data/songs/song-with-test-1.json",
+        expect.anything(),
+        { flag: "wx" }
+      );
+      expect(spawnSyncSpy).toHaveBeenCalledWith(
+        "git",
+        ["add", "_data/songs/song-with-test-1.json"],
+        spawnSyncInRepoDirectory
+      );
+    });
+  });
+
   describe("usage of git", () => {
     const credentialFileName = "/tmp/.my-credentials";
-    const spawnSyncInTmpDirectory = {
-      cwd: "/tmp",
-    };
-    const spawnSyncInRepoDirectory = {
-      cwd: "/tmp/CapoeiraSongbook",
-    };
     it("clones the CapoeiraSongbook repository", async () => {
-      await execLambda();
+      await execLambdaWithDefaultSong();
 
       expect(spawnSyncSpy).toHaveBeenCalledWith(
         "git",
@@ -62,7 +110,7 @@ describe("new-song", () => {
       );
     });
     it("configures git credential file", async () => {
-      await execLambda();
+      await execLambdaWithDefaultSong();
 
       expect(spawnSyncSpy).toHaveBeenCalledWith(
         "git",
@@ -77,7 +125,7 @@ describe("new-song", () => {
         GITHUB_PASSWORD: "test-password",
       };
 
-      await execLambda(undefined, envVars);
+      await execLambdaWithDefaultSong(envVars);
 
       expect(fsSpy.writeFile).toHaveBeenCalledWith(
         credentialFileName,
@@ -85,7 +133,7 @@ describe("new-song", () => {
       );
     });
     it("configures git name and email", async () => {
-      await execLambda();
+      await execLambdaWithDefaultSong();
 
       expect(spawnSyncSpy).toHaveBeenCalledWith(
         "git",
@@ -100,7 +148,7 @@ describe("new-song", () => {
       );
     });
     it("creates new git branch with random name", async () => {
-      await execLambda();
+      await execLambdaWithDefaultSong();
 
       expect(spawnSyncSpy).toHaveBeenCalledWith(
         "git",
@@ -112,25 +160,8 @@ describe("new-song", () => {
         spawnSyncInRepoDirectory
       );
     });
-    it("creates new file", async () => {
-      await execLambda();
-
-      expect(fsSpy.writeFile).toHaveBeenCalledWith(
-        "/tmp/CapoeiraSongbook/abcd-test-file.txt",
-        "a test of writing a file"
-      );
-    });
-    it("adds a new file to git stage", async () => {
-      await execLambda();
-
-      expect(spawnSyncSpy).toHaveBeenCalledWith(
-        "git",
-        ["add", "abcd-test-file.txt"],
-        spawnSyncInRepoDirectory
-      );
-    });
     it("commits git changes", async () => {
-      await execLambda();
+      await execLambdaWithDefaultSong();
 
       expect(spawnSyncSpy).toHaveBeenCalledWith(
         "git",
@@ -139,7 +170,7 @@ describe("new-song", () => {
       );
     });
     it("pushes git changes to the branch with a random name", async () => {
-      await execLambda();
+      await execLambdaWithDefaultSong();
 
       expect(spawnSyncSpy).toHaveBeenCalledWith(
         "git",
@@ -153,7 +184,10 @@ describe("new-song", () => {
       );
     });
     it("doesn't push git branch when is executed as dryRun", async () => {
-      await execLambda(createEvent({ dryRun: true }));
+      await execLambdaWithBody({
+        ...defaultTestSong,
+        dryRun: true,
+      });
 
       expect(spawnSyncSpy).not.toHaveBeenCalledWith(
         "git",
@@ -165,7 +199,10 @@ describe("new-song", () => {
 
   describe("cryptography", () => {
     it("decrypts the data in input", async () => {
-      const event = createEvent({ prop: "Encrypted test" });
+      const event = createEvent({
+        ...defaultTestSong,
+        prop: "Encrypted test",
+      });
 
       const envVars = {
         PRIVATE_KEY: "test-private-key",
@@ -179,29 +216,42 @@ describe("new-song", () => {
           padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
           oaepHash: "sha256",
         },
-        Buffer.from('{"prop":"Encrypted test"}')
+        Buffer.from(
+          JSON.stringify({
+            ...defaultTestSong,
+            prop: "Encrypted test",
+          })
+        )
       );
     });
   });
 
   describe("Response", () => {
     it("Returns correct data", async () => {
-      privateDecryptSpy.mockReturnValue('{"text":"Test decrypted text"}');
+      privateDecryptSpy.mockReturnValue(
+        JSON.stringify({
+          ...defaultTestSong,
+          testText: "Test decrypted text",
+        })
+      );
 
-      const returnValues = await execLambda();
+      const returnValues = await execLambdaWithDefaultSong();
 
       expect(returnValues).toMatchObject({
         isBase64Encoded: false,
         statusCode: 200,
         headers: { "content-type": "text/plain" },
-        body: '{"text":"Test decrypted text"}',
+        body: JSON.stringify({
+          ...defaultTestSong,
+          testText: "Test decrypted text",
+        }),
       });
     });
   });
 
   describe("Usage of Github API", () => {
     it("creates a pull request", async () => {
-      await execLambda();
+      await execLambdaWithDefaultSong();
 
       expect(octokitSpy.request).toHaveBeenCalledWith(
         "POST /repos/{owner}/{repo}/pulls",
@@ -221,7 +271,10 @@ describe("new-song", () => {
       );
     });
     it("doesn't create a pull request if executed with dryRun", async () => {
-      await execLambda(createEvent({ dryRun: true }));
+      await execLambdaWithBody({
+        ...defaultTestSong,
+        dryRun: true,
+      });
 
       expect(octokitSpy.request).not.toHaveBeenCalledWith(
         "POST /repos/{owner}/{repo}/pulls",

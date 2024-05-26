@@ -17,6 +17,8 @@ const octokit = new Octokit({
 describe("POST /song", () => {
   const endpoint_url = `${API_URL}/${ENDPOINT}`;
 
+  // TODO something for clean up? maybe based on branch and pr name? (that could contain name of song sent in tests)
+
   async function callLambdaWith(data) {
     const requestBody = JSON.stringify(data);
     const encryptedBody = encryptText(publicKey, requestBody);
@@ -32,6 +34,7 @@ describe("POST /song", () => {
   it("returns the correct data", async () => {
     const response = await callLambdaWith({
       dryRun: true,
+      title: "Test title",
       testText: "Some test data",
     });
 
@@ -54,7 +57,7 @@ describe("POST /song", () => {
       }
     );
 
-    const response = await callLambdaWith({});
+    const response = await callLambdaWith({ title: "A test title" });
 
     expect(response.status).toBe(200);
 
@@ -84,7 +87,7 @@ describe("POST /song", () => {
       }
     );
 
-    const response = await callLambdaWith({});
+    const response = await callLambdaWith({ title: "Another test title" });
 
     expect(response.status).toBe(200);
 

@@ -10,7 +10,7 @@ export class GitClient {
     this.#repoName = repoName;
     this.#repoUrl = repoUrl;
   }
-  #repoFolder() {
+  repoFolder() {
     return `${this.#parentFolder}/${this.#repoName}`;
   }
 
@@ -39,7 +39,7 @@ export class GitClient {
   }
 
   #executeRepoCommand(commandName, ...params) {
-    this.#executeGeneralGitCommand(this.#repoFolder(), commandName, ...params);
+    this.#executeGeneralGitCommand(this.repoFolder(), commandName, ...params);
   }
 
   #executeGeneralGitCommand(folder, commandName, ...params) {

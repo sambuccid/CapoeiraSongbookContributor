@@ -1,7 +1,7 @@
-import { spawnSync } from "child_process";
-import fs from "fs/promises";
+import { spawnSync as spawnSyncDependency } from "child_process";
+import fsDependency from "fs/promises";
 import { Octokit } from "octokit";
-import { decryptText } from "./lib/encryptDecrypt.js";
+import { decryptText as decryptTextDependency } from "./lib/encryptDecrypt.js";
 import { GitClient } from "./lib/git-client.js";
 import { GithubApi } from "./lib/github-api.js";
 
@@ -12,7 +12,9 @@ const REPO_URL = "https://github.com/CortinaCapoeira/CapoeiraSongbook.git";
 const getAuthRepoUrl = (username, password) =>
   `https://${username}:${password}@github.com/CortinaCapoeira/CapoeiraSongbook.git`;
 
-const octokit = new Octokit({
+const RELATIVE_SONGS_FOLDER_PATH = "_data/songs";
+
+const octokitClient = new Octokit({
   auth: process.env.GITHUB_PASSWORD,
 });
 
@@ -23,10 +25,10 @@ const ENV_VARS = {
 };
 
 const DEPENDENCIES = {
-  octokit,
-  spawnSync,
-  fs,
-  decryptText,
+  octokit: octokitClient,
+  spawnSync: spawnSyncDependency,
+  fs: fsDependency,
+  decryptText: decryptTextDependency,
 };
 
 export const handler = (event) => actualHandler(event, ENV_VARS, DEPENDENCIES);
@@ -58,12 +60,14 @@ export const actualHandler = async (event, envVars, dependencies) => {
   const branchName = `songbook-new-song-contribution-${randomN}`;
   git.checkoutBranch(branchName);
 
-  await fs.writeFile(
-    `/tmp/${REPO_NAME}/abcd-test-file.txt`,
+  const { newFileRelativePath } = await createSongFile(
+    fs,
+    git.repoFolder(),
+    requestBody.title,
     "a test of writing a file"
   );
 
-  git.add("abcd-test-file.txt");
+  git.add(newFileRelativePath);
   git.commit("Add test file");
 
   if (!requestBody.dryRun) {
@@ -82,3 +86,20 @@ export const actualHandler = async (event, envVars, dependencies) => {
     body: JSON.stringify(requestBody),
   };
 };
+
+async function createSongFile(fs, gitRepoFolder, title, data) {
+  const dashedTitle = title.toLowerCase().replaceAll(" ", "-");
+  let newFileRelativePath = `${RELATIVE_SONGS_FOLDER_PATH}/${dashedTitle}.json`;
+
+  try {
+    await fs.writeFile(`${gitRepoFolder}/${newFileRelativePath}`, data, {
+      flag: "wx",
+    });
+  } catch (err) {
+    newFileRelativePath = `${RELATIVE_SONGS_FOLDER_PATH}/${dashedTitle}-1.json`;
+    await fs.writeFile(`${gitRepoFolder}/${newFileRelativePath}`, data, {
+      flag: "wx",
+    });
+  }
+  return { newFileRelativePath };
+}
