@@ -58,6 +58,9 @@ Resources:
       StageName: $default
       ApiId: !Ref HttpApi
       AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 2
 
   # Allows the Lambda function to access CloudWatch
   NewSongFunctionRole:
