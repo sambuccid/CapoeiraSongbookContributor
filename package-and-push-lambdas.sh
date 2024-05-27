@@ -35,6 +35,9 @@ package_in_zip_file
 
 DEPLOYMENT_BUCKET=$(get_deployment_bucket)
 
+echo "Cleaning bucket before upload"
+./empty-s3-bucket.sh "$DEPLOYMENT_BUCKET"
+
 echo "Uploading to S3"
 aws s3 cp "./$PACKAGE_FILE_NAME" "s3://$DEPLOYMENT_BUCKET/"
 
