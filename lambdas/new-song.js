@@ -64,18 +64,18 @@ export const actualHandler = async (event, envVars, dependencies) => {
     fs,
     git.repoFolder(),
     requestBody.title,
-    "a test of writing a file"
+    createFileContent(requestBody)
   );
 
   git.add(newFileRelativePath);
-  git.commit("Add test file");
+  git.commit(`Add new song: ${requestBody.title}`);
 
   if (!requestBody.dryRun) {
     git.push(branchName);
     await github.createPullRequest(
       branchName,
-      "New song contribution",
-      "New song contributed via the app."
+      `Add ${requestBody.title} song`,
+      `New song contributed via the app: ${requestBody.title}`
     );
   }
 
@@ -87,19 +87,33 @@ export const actualHandler = async (event, envVars, dependencies) => {
   };
 };
 
+function createFileContent(requestBody) {
+  const content = { title: requestBody.title };
+  return JSON.stringify(content);
+}
+
 async function createSongFile(fs, gitRepoFolder, title, data) {
-  const dashedTitle = title.toLowerCase().replaceAll(" ", "-");
-  let newFileRelativePath = `${RELATIVE_SONGS_FOLDER_PATH}/${dashedTitle}.json`;
+  let dashedTitle = title.toLowerCase().replaceAll(" ", "-");
 
   try {
-    await fs.writeFile(`${gitRepoFolder}/${newFileRelativePath}`, data, {
+    await fs.writeFile(getAbsoluteFilePath(dashedTitle), data, {
       flag: "wx",
     });
   } catch (err) {
-    newFileRelativePath = `${RELATIVE_SONGS_FOLDER_PATH}/${dashedTitle}-1.json`;
-    await fs.writeFile(`${gitRepoFolder}/${newFileRelativePath}`, data, {
+    dashedTitle = `${dashedTitle}-1`;
+    await fs.writeFile(getAbsoluteFilePath(dashedTitle), data, {
       flag: "wx",
     });
   }
-  return { newFileRelativePath };
+  return {
+    fileName: dashedTitle,
+    newFileRelativePath: getRelativeFilePath(dashedTitle),
+  };
+
+  function getAbsoluteFilePath(fileName) {
+    return `${gitRepoFolder}/${getRelativeFilePath(fileName)}`;
+  }
+  function getRelativeFilePath(fileName) {
+    return `${RELATIVE_SONGS_FOLDER_PATH}/${fileName}.json`;
+  }
 }

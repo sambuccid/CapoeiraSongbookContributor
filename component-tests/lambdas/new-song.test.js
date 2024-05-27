@@ -77,6 +77,15 @@ describe("new-song", () => {
         spawnSyncInRepoDirectory
       );
     });
+    it("populates the file correctly", async () => {
+      await execLambdaWithBody({ title: "A new Test song" });
+
+      expect(fsSpy.writeFile).toHaveBeenCalledWith(
+        expect.anything(),
+        JSON.stringify({ title: "A new Test song" }),
+        expect.anything()
+      );
+    });
     it("appends suffix to title if file with same name exists", async () => {
       fsSpy.writeFile.mockImplementation((fileName) => {
         if (fileName.includes("song-with-test.json"))
@@ -161,11 +170,14 @@ describe("new-song", () => {
       );
     });
     it("commits git changes", async () => {
-      await execLambdaWithDefaultSong();
+      await execLambdaWithBody({
+        ...defaultTestSong,
+        title: "Test title",
+      });
 
       expect(spawnSyncSpy).toHaveBeenCalledWith(
         "git",
-        ["commit", "-m", '"Add test file"'],
+        ["commit", "-m", '"Add new song: Test title"'],
         spawnSyncInRepoDirectory
       );
     });
@@ -251,15 +263,18 @@ describe("new-song", () => {
 
   describe("Usage of Github API", () => {
     it("creates a pull request", async () => {
-      await execLambdaWithDefaultSong();
+      await execLambdaWithBody({
+        ...defaultTestSong,
+        title: "The amazing test",
+      });
 
       expect(octokitSpy.request).toHaveBeenCalledWith(
         "POST /repos/{owner}/{repo}/pulls",
         {
           owner: "CortinaCapoeira",
           repo: "CapoeiraSongbook",
-          title: "New song contribution",
-          body: "New song contributed via the app.",
+          title: "Add The amazing test song",
+          body: "New song contributed via the app: The amazing test",
           head: expect.stringMatching(
             /^songbook-new-song-contribution-\d{1,7}$/
           ),
