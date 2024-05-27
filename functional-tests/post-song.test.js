@@ -35,6 +35,7 @@ describe("POST /song", () => {
     const response = await callLambdaWith({
       dryRun: true,
       title: "Test title",
+      lines: [{ br: "test", en: "test", bold: true }],
       testText: "Some test data",
     });
 
@@ -57,7 +58,10 @@ describe("POST /song", () => {
       }
     );
 
-    const response = await callLambdaWith({ title: "A test title" });
+    const response = await callLambdaWith({
+      title: "A test title",
+      lines: [{ br: "Brazilian line", en: "English line" }],
+    });
 
     expect(response.status).toBe(200);
 
@@ -87,7 +91,15 @@ describe("POST /song", () => {
       }
     );
 
-    const response = await callLambdaWith({ title: "Another test title" });
+    const response = await callLambdaWith({
+      title: "Another test title",
+      lines: [
+        {
+          br: "Another brazilian line",
+          en: "Another english line",
+        },
+      ],
+    });
 
     expect(response.status).toBe(200);
 

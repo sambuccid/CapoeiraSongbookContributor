@@ -88,7 +88,14 @@ export const actualHandler = async (event, envVars, dependencies) => {
 };
 
 function createFileContent(requestBody) {
-  const content = { title: requestBody.title };
+  const content = {
+    title: requestBody.title,
+    lines: requestBody.lines.map((line) => ({
+      br: line.br,
+      en: line.en,
+      bold: line.bold,
+    })),
+  };
   return JSON.stringify(content);
 }
 

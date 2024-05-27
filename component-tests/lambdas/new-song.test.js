@@ -37,6 +37,7 @@ describe("new-song", () => {
   };
   const defaultTestSong = {
     title: "a test song",
+    lines: [],
   };
   const execLambda = async (event, envVars, dependencies) => {
     if (!event) event = createEvent();
@@ -60,7 +61,10 @@ describe("new-song", () => {
 
   describe("creation of new song file", () => {
     it("creates new file for the song in the songs folder", async () => {
-      await execLambdaWithBody({ title: "Test Song 1" });
+      await execLambdaWithBody({
+        ...defaultTestSong,
+        title: "Test Song 1",
+      });
 
       expect(fsSpy.writeFile).toHaveBeenCalledWith(
         "/tmp/CapoeiraSongbook/_data/songs/test-song-1.json",
@@ -69,7 +73,10 @@ describe("new-song", () => {
       );
     });
     it("adds a new file to git stage", async () => {
-      await execLambdaWithBody({ title: "A new Test song" });
+      await execLambdaWithBody({
+        ...defaultTestSong,
+        title: "A new Test song",
+      });
 
       expect(spawnSyncSpy).toHaveBeenCalledWith(
         "git",
@@ -78,11 +85,27 @@ describe("new-song", () => {
       );
     });
     it("populates the file correctly", async () => {
-      await execLambdaWithBody({ title: "A new Test song" });
+      await execLambdaWithBody({
+        title: "A new Test song",
+        lines: [
+          { br: "Test line 1 in brazilian", en: "Test line 1 in english" },
+          { br: "Test line 2 in brazilian", en: "Test line 2 in english" },
+          { br: "", en: "" },
+          { br: "Bold line br", en: "Bold line en", bold: true },
+        ],
+      });
 
       expect(fsSpy.writeFile).toHaveBeenCalledWith(
         expect.anything(),
-        JSON.stringify({ title: "A new Test song" }),
+        JSON.stringify({
+          title: "A new Test song",
+          lines: [
+            { br: "Test line 1 in brazilian", en: "Test line 1 in english" },
+            { br: "Test line 2 in brazilian", en: "Test line 2 in english" },
+            { br: "", en: "" },
+            { br: "Bold line br", en: "Bold line en", bold: true },
+          ],
+        }),
         expect.anything()
       );
     });
@@ -92,7 +115,10 @@ describe("new-song", () => {
           return Promise.reject(new Error("File already exists"));
       });
 
-      await execLambdaWithBody({ title: "song with test" });
+      await execLambdaWithBody({
+        ...defaultTestSong,
+        title: "song with test",
+      });
 
       expect(fsSpy.writeFile).toHaveBeenCalledWith(
         "/tmp/CapoeiraSongbook/_data/songs/song-with-test-1.json",
