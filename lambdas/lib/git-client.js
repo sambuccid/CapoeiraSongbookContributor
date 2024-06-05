@@ -18,12 +18,20 @@ export class GitClient {
     this.#executeGeneralGitCommand(this.#parentFolder, "clone", this.#repoUrl);
   }
 
+  hardReset(branchName) {
+    this.#executeRepoCommand("reset", "--hard", branchName);
+  }
+
   config(...params) {
     this.#executeRepoCommand("config", ...params);
   }
 
-  checkoutBranch(branchName) {
+  checkoutNewBranch(branchName) {
     this.#executeRepoCommand("checkout", "-b", branchName);
+  }
+
+  checkoutExistingBranch(branchName) {
+    this.#executeRepoCommand("checkout", branchName);
   }
 
   add(path) {
@@ -36,6 +44,10 @@ export class GitClient {
 
   push(branchName) {
     this.#executeRepoCommand("push", "--set-upstream", "origin", branchName);
+  }
+
+  pullRebase() {
+    this.#executeRepoCommand("pull", "-r");
   }
 
   #executeRepoCommand(commandName, ...params) {

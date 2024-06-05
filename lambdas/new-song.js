@@ -5,7 +5,7 @@ import { decryptText as decryptTextDependency } from "./lib/encryptDecrypt.js";
 import { GitClient } from "./lib/git-client.js";
 import { GithubApi } from "./lib/github-api.js";
 
-const CREDENTAIL_FILE = "/tmp/.my-credentials";
+const CREDENTIAL_FILE = "/tmp/.my-credentials";
 const REPO_OWNER = "CortinaCapoeira";
 const REPO_NAME = "CapoeiraSongbook";
 const REPO_URL = "https://github.com/CortinaCapoeira/CapoeiraSongbook.git";
@@ -42,23 +42,11 @@ export const actualHandler = async (event, envVars, dependencies) => {
   const decryptedRequest = decryptText(PRIVATE_KEY, event.body);
   const requestBody = JSON.parse(decryptedRequest);
 
-  // TODO if(`/tmp/${REPO_NAME}` exists){ git checkout main && git pull}
-
-  git.clone();
-
-  git.config("credential.helper", `store --file ${CREDENTAIL_FILE}`);
-
-  await fs.writeFile(
-    CREDENTAIL_FILE,
-    getAuthRepoUrl(GITHUB_USERNAME, GITHUB_PASSWORD)
-  );
-
-  git.config("user.email", "songbook-contributor@a.com");
-  git.config("user.name", "Songbook-contributor");
+  await initialiseRepo(fs, git, { GITHUB_USERNAME, GITHUB_PASSWORD });
 
   const randomN = Math.floor(Math.random() * 10000000);
   const branchName = `songbook-new-song-contribution-${randomN}`;
-  git.checkoutBranch(branchName);
+  git.checkoutNewBranch(branchName);
 
   const { newFileRelativePath } = await createSongFile(
     fs,
@@ -86,6 +74,26 @@ export const actualHandler = async (event, envVars, dependencies) => {
     body: JSON.stringify(requestBody),
   };
 };
+
+async function initialiseRepo(fs, git, credentials) {
+  const alreadyCheckedOut = await fileOrDirExist(fs, git.repoFolder());
+  if (!alreadyCheckedOut) {
+    git.clone();
+
+    git.config("credential.helper", `store --file ${CREDENTIAL_FILE}`);
+    await fs.writeFile(
+      CREDENTIAL_FILE,
+      getAuthRepoUrl(credentials.GITHUB_USERNAME, credentials.GITHUB_PASSWORD)
+    );
+
+    git.config("user.email", "songbook-contributor@a.com");
+    git.config("user.name", "Songbook-contributor");
+  } else {
+    git.checkoutExistingBranch("main");
+    git.hardReset("main");
+    git.pullRebase();
+  }
+}
 
 function createFileContent(requestBody) {
   const content = {
@@ -122,5 +130,14 @@ async function createSongFile(fs, gitRepoFolder, title, data) {
   }
   function getRelativeFilePath(fileName) {
     return `${RELATIVE_SONGS_FOLDER_PATH}/${fileName}.json`;
+  }
+}
+
+async function fileOrDirExist(fs, path) {
+  try {
+    await fs.stat(path);
+    return true;
+  } catch {
+    return false;
   }
 }

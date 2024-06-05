@@ -20,7 +20,7 @@ describe("new-song", () => {
   const spawnSyncSpy = jest.fn();
   const fsSpy = {
     writeFile: jest.fn(),
-    readdir: jest.fn(),
+    stat: jest.fn(),
   };
   const testDependencies = {
     octokit: octokitSpy,
@@ -57,6 +57,7 @@ describe("new-song", () => {
       .spyOn(crypto, "privateDecrypt")
       .mockImplementation((key, buffer) => buffer);
     spawnSyncSpy.mockReturnValue({ output: "" });
+    fsSpy.stat.mockRejectedValue("Error");
   });
 
   describe("creation of new song file", () => {
@@ -232,6 +233,64 @@ describe("new-song", () => {
         ["push", expect.anything(), expect.anything(), expect.anything()],
         expect.anything()
       );
+    });
+    describe("when the repository is already checked out", () => {
+      beforeEach(() => {
+        fsSpy.stat.mockResolvedValue();
+      });
+      it("does not clone the repository again", async () => {
+        await execLambdaWithDefaultSong();
+
+        expect(spawnSyncSpy).not.toHaveBeenCalledWith(
+          "git",
+          ["clone", expect.anything()],
+          spawnSyncInTmpDirectory
+        );
+      });
+      it("does not create credential file again", async () => {
+        await execLambdaWithDefaultSong();
+
+        expect(fsSpy.writeFile).not.toHaveBeenCalledWith(
+          credentialFileName,
+          expect.anything()
+        );
+      });
+      it("does not set any config again", async () => {
+        await execLambdaWithDefaultSong();
+
+        expect(spawnSyncSpy).not.toHaveBeenCalledWith(
+          "git",
+          ["config", expect.anything(), expect.anything()],
+          spawnSyncInRepoDirectory
+        );
+      });
+      it("makes git point to main branch", async () => {
+        await execLambdaWithDefaultSong();
+
+        expect(spawnSyncSpy).toHaveBeenCalledWith(
+          "git",
+          ["checkout", "main"],
+          spawnSyncInRepoDirectory
+        );
+      });
+      it("completely resets git branch to remove any local changes", async () => {
+        await execLambdaWithDefaultSong();
+
+        expect(spawnSyncSpy).toHaveBeenCalledWith(
+          "git",
+          ["reset", "--hard", "main"],
+          spawnSyncInRepoDirectory
+        );
+      });
+      it("pulls the latest changes from main", async () => {
+        await execLambdaWithDefaultSong();
+
+        expect(spawnSyncSpy).toHaveBeenCalledWith(
+          "git",
+          ["pull", "-r"],
+          spawnSyncInRepoDirectory
+        );
+      });
     });
   });
 
