@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import { Octokit } from "octokit";
 import { encryptText } from "../lambdas/lib/encryptDecrypt.js";
 
-const API_URL = "https://huhwadu4w4.execute-api.eu-west-2.amazonaws.com";
+const apiUrl = await fs.readFile("./.credentials/api_url.txt");
 const ENDPOINT = "song";
 
 const publicKey = await fs.readFile("./.credentials/public_key.txt");
@@ -15,7 +15,7 @@ const octokit = new Octokit({
 });
 
 describe("POST /song", () => {
-  const endpoint_url = `${API_URL}/${ENDPOINT}`;
+  const endpoint_url = `${apiUrl}/${ENDPOINT}`;
 
   // TODO something for clean up? maybe based on branch and pr name? (that could contain name of song sent in tests)
 
