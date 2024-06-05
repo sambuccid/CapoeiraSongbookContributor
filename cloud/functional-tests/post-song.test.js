@@ -36,14 +36,16 @@ describe("POST /song", () => {
       dryRun: true,
       title: "Test title",
       lines: [{ br: "test", en: "test", bold: true }],
-      testText: "Some test data",
     });
 
     const respData = await response.text();
     const respStatus = response.status;
 
     expect(respStatus).toBe(200);
-    expect(JSON.parse(respData)).toMatchObject({ testText: "Some test data" });
+    expect(JSON.parse(respData)).toMatchObject({
+      title: "Test title",
+      lines: [{ br: "test", en: "test", bold: true }],
+    });
   }, 40000);
 
   it.skip("creates a new branch", async () => {

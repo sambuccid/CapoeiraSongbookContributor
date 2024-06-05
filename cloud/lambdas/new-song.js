@@ -48,11 +48,12 @@ export const actualHandler = async (event, envVars, dependencies) => {
   const branchName = `songbook-new-song-contribution-${randomN}`;
   git.checkoutNewBranch(branchName);
 
+  const newFileContent = createFileContent(requestBody);
   const { newFileRelativePath } = await createSongFile(
     fs,
     git.repoFolder(),
     requestBody.title,
-    createFileContent(requestBody)
+    newFileContent
   );
 
   git.add(newFileRelativePath);
@@ -71,7 +72,7 @@ export const actualHandler = async (event, envVars, dependencies) => {
     isBase64Encoded: false,
     statusCode: 200,
     headers: { "content-type": "text/plain" },
-    body: JSON.stringify(requestBody),
+    body: requestBody.dryRun ? newFileContent : "",
   };
 };
 

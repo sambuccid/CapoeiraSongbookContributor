@@ -324,15 +324,22 @@ describe("new-song", () => {
   });
 
   describe("Response", () => {
-    it("Returns correct data", async () => {
-      privateDecryptSpy.mockReturnValue(
-        JSON.stringify({
-          ...defaultTestSong,
-          testText: "Test decrypted text",
-        })
-      );
-
+    it("returns no data", async () => {
       const returnValues = await execLambdaWithDefaultSong();
+      expect(returnValues).toMatchObject({
+        isBase64Encoded: false,
+        statusCode: 200,
+        headers: { "content-type": "text/plain" },
+        body: "",
+      });
+    });
+    it("returns content of file when runs with dryRun option", async () => {
+      const returnValues = await execLambdaWithBody({
+        dryRun: true,
+        ...defaultTestSong,
+        title: "song with a test title",
+        lines: [{ br: "line1br", en: "line1en" }],
+      });
 
       expect(returnValues).toMatchObject({
         isBase64Encoded: false,
@@ -340,7 +347,8 @@ describe("new-song", () => {
         headers: { "content-type": "text/plain" },
         body: JSON.stringify({
           ...defaultTestSong,
-          testText: "Test decrypted text",
+          title: "song with a test title",
+          lines: [{ br: "line1br", en: "line1en" }],
         }),
       });
     });
