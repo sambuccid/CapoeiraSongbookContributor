@@ -13,6 +13,9 @@ class SongViewModel: ViewModel() {
     fun getEnLines() = song.enLines
     fun newLine() { song.newLine() }
     fun removeLine(lineIndex: Int) { song.removeLine(lineIndex) }
+    fun updateBold(lineIndex: Int, newBold: Boolean) { song.updateBold(lineIndex, newBold) }
+    fun canSend(): Boolean { return song.canSend() }
+    fun send() { song.send() }
 
     private var showEnglishScreen by mutableStateOf(false)
     fun swapScreens() { showEnglishScreen = !showEnglishScreen }
@@ -33,13 +36,26 @@ class Song {
         brLines.removeLine(lineIndex)
         enLines.removeLine(lineIndex)
     }
+    fun updateBold(lineIndex: Int, newBold: Boolean){
+        brLines.updateBold(lineIndex, newBold)
+        enLines.updateBold(lineIndex, newBold)
+    }
+    fun canSend() = brLines.isNotEmpty()
+    fun send() {
+        // TODO
+    }
 }
 
 class SongLines {
     val lines = mutableStateListOf(SongLine())
 
     fun setTextLine(lineIndex: Int, newText: String){
-        lines[lineIndex] = SongLine(newText)
+        lines[lineIndex] = lines[lineIndex].copy(str = newText)
+    }
+
+    fun updateBold(lineIndex: Int, newBold: Boolean){
+        val updated = lines[lineIndex].copy(bold = newBold)
+        lines[lineIndex] = updated
     }
 
     fun removeLine(lineIndex: Int){
@@ -49,13 +65,18 @@ class SongLines {
     fun addEmptyLine(){
         lines.add(SongLine())
     }
+
+    fun isNotEmpty() = !lines.isEmpty()
 }
 
-data class SongLine(var str: String = ""){
+data class SongLine(var str: String = "", var bold: Boolean = false){
     override fun equals(other: Any?) = (other is SongLine)
             && str == other.str
+            && bold == other.bold
 
     override fun hashCode(): Int {
-        return str.hashCode()
+        var result = str.hashCode()
+        result = 31 * result + bold.hashCode()
+        return result
     }
 }

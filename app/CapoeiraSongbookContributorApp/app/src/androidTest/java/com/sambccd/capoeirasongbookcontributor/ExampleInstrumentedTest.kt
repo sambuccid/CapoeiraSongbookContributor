@@ -21,4 +21,18 @@ class ExampleInstrumentedTest {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("com.sambccd.capoeirasongbookcontributor", appContext.packageName)
     }
+
+    @Test
+    fun updatesBoldValueLine() {
+        val a = SongLines()
+        a.updateBold(0, true)
+        assertEquals(true, a.lines[0].bold)
+    }
+
+    @Test
+    fun updatesBoldValue() {
+        val a = SongLine()
+        val b = a.copy(bold = true)
+        assertEquals(true, b.bold)
+    }
 }

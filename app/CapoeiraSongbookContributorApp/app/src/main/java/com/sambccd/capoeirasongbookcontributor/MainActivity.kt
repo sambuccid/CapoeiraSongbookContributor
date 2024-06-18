@@ -17,9 +17,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -61,14 +66,18 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
+    // TODO set title somewhere
     if(viewModel.isBrazilianScreen()){
         GenericScreen(
             screenTitle = "Song",
             songLines = viewModel.getBrLines(),
             onNewLine = viewModel::newLine,
             onRemoveLine = viewModel::removeLine,
+            onBoldUpdate = viewModel::updateBold,
             otherLanguage = "English",
             onSwapLanguage = viewModel::swapScreens,
+            canSend = viewModel.canSend(),
+            onSend = viewModel::send,
             modifier = modifier
         )
     } else {
@@ -77,8 +86,11 @@ fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
             songLines = viewModel.getEnLines(),
             onNewLine = viewModel::newLine,
             onRemoveLine = viewModel::removeLine,
+            onBoldUpdate = viewModel::updateBold,
             otherLanguage = "Portuguese",
             onSwapLanguage = viewModel::swapScreens,
+            canSend = viewModel.canSend(),
+            onSend = viewModel::send,
             modifier = modifier
         )
     }
@@ -90,13 +102,17 @@ fun GenericScreen(
     songLines: SongLines,
     onNewLine: () -> Unit,
     onRemoveLine: (idx: Int) -> Unit,
+    onBoldUpdate: (Int, Boolean) -> Unit,
     otherLanguage: String,
     onSwapLanguage: () -> Unit,
+    canSend: Boolean,
+    onSend: () -> Unit,
     modifier: Modifier = Modifier
 ){
-    Column(modifier
-        .fillMaxSize()
-        .padding(8.dp)
+    Column(
+        modifier
+            .fillMaxSize()
+            .padding(8.dp)
     ){
         Title(screenTitle, Modifier.align(Alignment.CenterHorizontally))
         Spacer(Modifier.height(12.dp))
@@ -109,9 +125,11 @@ fun GenericScreen(
                 val printedIndex = (index + 1).toString()
                 SongLineElement(
                     printedIndex = printedIndex,
-                    line = line,
+                    line = line.str,
                     onLineUpdate = { newText -> songLines.setTextLine(index, newText) },
                     onLineDelete = { onRemoveLine(index) },
+                    bold = line.bold,
+                    onBoldUpdate = { newBold -> onBoldUpdate(index, newBold) },
                     deletable = true
                 )
 
@@ -121,52 +139,85 @@ fun GenericScreen(
             onClick = onNewLine,
             modifier = Modifier.align(Alignment.End)
         )
-        ActionsBottomLine(otherLanguage, onSwapLanguage)
+        ActionsBottomLine(
+            otherLanguage,
+            onSwapLanguage,
+            canSend,
+            onSend
+        )
     }
 }
 
 @Composable
 fun SongLineElement(
     printedIndex: String,
-    line: SongLine,
-    onLineUpdate: (newText: String) -> Unit,
+    line: String,
+    onLineUpdate: (String) -> Unit,
     onLineDelete: () -> Unit,
+    bold: Boolean,
+    onBoldUpdate: (Boolean) -> Unit,
     deletable: Boolean,
     modifier: Modifier = Modifier
 ){
+    val boldTextStyle = TextStyle(fontWeight = FontWeight.SemiBold)
+    val defaultTextStyle = TextStyle()
     Row(modifier) {
         Text(
-            text =  "$printedIndex.",
+            text = "$printedIndex.",
             fontSize = 24.sp,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.align(Alignment.Bottom)
+            modifier = Modifier.align(Alignment.CenterVertically)
         )
         Spacer(Modifier.width(8.dp))
         OutlinedTextField(
-            value = line.str,
+            value = line,
             onValueChange = onLineUpdate,
             maxLines = 1,
-            modifier = Modifier.weight(1f)
+            textStyle = if(bold) boldTextStyle else defaultTextStyle,
+            modifier = Modifier
+                .weight(1f)
+                .align(Alignment.CenterVertically)
         )
-        IconButton(
-            onClick = onLineDelete,
+        Column(
             modifier = Modifier.align(Alignment.CenterVertically),
-            enabled = deletable
         ) {
-            Icon(
-                Icons.Rounded.Clear,
-                contentDescription = "Delete line number $printedIndex)"
+            Checkbox(
+                checked = bold,
+                onCheckedChange = onBoldUpdate,
             )
+            IconButton(
+                onClick = onLineDelete,
+                enabled = deletable
+            ) {
+                Icon(
+                    Icons.Rounded.Clear,
+                    contentDescription = "Delete line number $printedIndex)"
+                )
+            }
         }
     }
 }
 
 @Composable
-fun ActionsBottomLine (otherLanguage: String, onSwapLanguage: () -> Unit,modifier: Modifier = Modifier) {
+fun ActionsBottomLine (
+    otherLanguage: String,
+    onSwapLanguage: () -> Unit,
+    sendEnabled: Boolean,
+    onSend: () -> Unit,
+    modifier: Modifier = Modifier) {
     Row(
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = modifier.fillMaxWidth()
     ){
+        Button(
+            enabled = sendEnabled,
+            onClick = onSend
+        ) {
+            Icon(
+                Icons.Filled.Done,
+                contentDescription = "Add line")
+            Text("Send", Modifier.padding(start = 8.dp))
+        }
         Button(
             onClick = onSwapLanguage
         ){
@@ -179,7 +230,7 @@ fun ActionsBottomLine (otherLanguage: String, onSwapLanguage: () -> Unit,modifie
 }
 
 @Composable
-fun NewLineButton(onClick: () -> Unit, modifier: Modifier){
+fun NewLineButton(onClick: () -> Unit, modifier: Modifier = Modifier){
     FloatingActionButton(
         onClick = onClick,
         modifier = modifier
