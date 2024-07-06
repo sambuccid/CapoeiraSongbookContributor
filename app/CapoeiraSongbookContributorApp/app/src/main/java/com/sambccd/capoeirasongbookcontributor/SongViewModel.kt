@@ -7,8 +7,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
 class SongViewModel: ViewModel() {
-    val song = Song()
-    fun setTitle() = song::title::set
+    private val song = Song()
+    fun setTitle(newTitle: String) { song.title = newTitle }
+    fun getTitle() = song.title
     fun getBrLines() = song.brLines
     fun getEnLines() = song.enLines
     fun newLine() { song.newLine() }

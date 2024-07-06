@@ -17,9 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material3.Button
@@ -27,17 +25,18 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,10 +65,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
-    // TODO set title somewhere
     if(viewModel.isBrazilianScreen()){
         GenericScreen(
-            screenTitle = "Song",
+            songTitle = viewModel.getTitle(),
+            languageLabel = "PT",
             songLines = viewModel.getBrLines(),
             onNewLine = viewModel::newLine,
             onRemoveLine = viewModel::removeLine,
@@ -78,11 +77,15 @@ fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
             onSwapLanguage = viewModel::swapScreens,
             canSend = viewModel.canSend(),
             onSend = viewModel::send,
+            canUpdateTitle = true,
+            onTitleUpdate = viewModel::setTitle,
             modifier = modifier
+            // TODO refactor to remove double parameters of value and setValue and instead use a MutableState<> type
         )
     } else {
         GenericScreen(
-            screenTitle = "English",
+            songTitle = viewModel.getTitle(),
+            languageLabel = "EN",
             songLines = viewModel.getEnLines(),
             onNewLine = viewModel::newLine,
             onRemoveLine = viewModel::removeLine,
@@ -91,6 +94,8 @@ fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
             onSwapLanguage = viewModel::swapScreens,
             canSend = viewModel.canSend(),
             onSend = viewModel::send,
+            canUpdateTitle = false,
+            onTitleUpdate = viewModel::setTitle,
             modifier = modifier
         )
     }
@@ -98,7 +103,8 @@ fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
 
 @Composable
 fun GenericScreen(
-    screenTitle: String,
+    songTitle: String,
+    languageLabel: String,
     songLines: SongLines,
     onNewLine: () -> Unit,
     onRemoveLine: (idx: Int) -> Unit,
@@ -107,6 +113,8 @@ fun GenericScreen(
     onSwapLanguage: () -> Unit,
     canSend: Boolean,
     onSend: () -> Unit,
+    canUpdateTitle: Boolean,
+    onTitleUpdate: (String) -> Unit,
     modifier: Modifier = Modifier
 ){
     Column(
@@ -114,7 +122,7 @@ fun GenericScreen(
             .fillMaxSize()
             .padding(8.dp)
     ){
-        Title(screenTitle, Modifier.align(Alignment.CenterHorizontally))
+        Title(songTitle, canUpdateTitle, onTitleUpdate, languageLabel, Modifier.align(Alignment.CenterHorizontally))
         Spacer(Modifier.height(12.dp))
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -240,12 +248,33 @@ fun NewLineButton(onClick: () -> Unit, modifier: Modifier = Modifier){
 }
 
 @Composable
-fun Title(title: String, modifier: Modifier){
-    Row(modifier){
+fun Title(
+    title: String,
+    canUpdateTitle: Boolean,
+    onTitleUpdate: (String) -> Unit,
+    languageLabel: String,
+    modifier: Modifier
+){
+    Row(modifier.fillMaxWidth()){
+        val titleTextStyle = LocalTextStyle.current.copy(
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+            fontSize = 27.sp)
+        OutlinedTextField(
+            value = title,
+            onValueChange = onTitleUpdate,
+            label = { Text("Song title") },
+            singleLine = true,
+            textStyle = titleTextStyle,
+            enabled = canUpdateTitle,
+            modifier = Modifier.alignBy(LastBaseline).weight(1f)
+        )
+        Spacer(Modifier.width(16.dp))
         Text(
-            text = title,
+            text = languageLabel,
             fontSize = 36.sp,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.alignBy(LastBaseline)
         )
     }
 }
@@ -262,5 +291,6 @@ fun previewViewModel(): SongViewModel {
     val viewModel = SongViewModel()
     viewModel.getBrLines().addEmptyLine()
     viewModel.getBrLines().setTextLine(0,"Test Text")
+    viewModel.setTitle("Song title")
     return viewModel
 }
