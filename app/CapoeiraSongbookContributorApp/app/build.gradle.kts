@@ -1,7 +1,19 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
 }
+
+var apiKeyPropertiesFile = rootProject.file("apikey.properties")
+var apiKeyProperties = Properties()
+apiKeyProperties.load(FileInputStream(apiKeyPropertiesFile))
+
+var apiPublicKeyFile = rootProject.file("apipublickey.txt")
+val apiPublicKeyBuilder = StringBuilder()
+apiPublicKeyFile.inputStream().bufferedReader().forEachLine { apiPublicKeyBuilder.append(it + "\\n") }
+val apiPublicKey = apiPublicKeyBuilder.toString()
 
 android {
     namespace = "com.sambccd.capoeirasongbookcontributor"
@@ -18,6 +30,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Load Api keys
+        buildConfigField("String", "API_PUBLIC_KEY", "\"${apiPublicKey}\"")
+        buildConfigField("String", "API_URL", apiKeyProperties.getProperty("apiurl"))
     }
 
     buildTypes {
@@ -35,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"

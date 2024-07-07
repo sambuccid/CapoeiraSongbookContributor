@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.sp
 import com.sambccd.capoeirasongbookcontributor.ui.theme.CapoeiraSongbookContributorTheme
 
 class MainActivity : ComponentActivity() {
-
     private val viewModel by viewModels<SongViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +61,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
+// TODO need to refactor to extract components better, and reorganise how we pass variables down
 @Composable
 fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
     if(viewModel.isBrazilianScreen()){

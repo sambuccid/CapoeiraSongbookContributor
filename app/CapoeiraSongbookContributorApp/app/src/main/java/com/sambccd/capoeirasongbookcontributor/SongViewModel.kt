@@ -43,7 +43,7 @@ class Song {
     }
     fun canSend() = brLines.isNotEmpty()
     fun send() {
-        // TODO
+        SendSongAction().sendSong(this)
     }
 }
 
