@@ -33,7 +33,7 @@ android {
 
         // Load Api keys
         buildConfigField("String", "API_PUBLIC_KEY", "\"${apiPublicKey}\"")
-        buildConfigField("String", "API_URL", apiKeyProperties.getProperty("apiurl"))
+        buildConfigField("String", "API_DOMAIN", apiKeyProperties.getProperty("apidomain"))
     }
 
     buildTypes {

@@ -16,19 +16,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Done
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +61,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     HighLevelLayout(
                             viewModel = viewModel,
+                            closeApp = { this.finish() },
                             modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -63,7 +72,11 @@ class MainActivity : ComponentActivity() {
 
 // TODO need to refactor to extract components better, and reorganise how we pass variables down
 @Composable
-fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
+fun HighLevelLayout(
+    viewModel: SongViewModel,
+    closeApp: () -> Unit,
+    modifier: Modifier = Modifier
+){
     if(viewModel.isBrazilianScreen()){
         GenericScreen(
             songTitle = viewModel.getTitle(),
@@ -78,6 +91,9 @@ fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
             onSend = viewModel::send,
             canUpdateTitle = true,
             onTitleUpdate = viewModel::setTitle,
+            sendSongState = viewModel.sendSongState,
+            resetSendSongState = viewModel::resetSendSongState,
+            closeApp = closeApp,
             modifier = modifier
             // TODO refactor to remove double parameters of value and setValue and instead use a MutableState<> type
         )
@@ -95,6 +111,9 @@ fun HighLevelLayout(viewModel: SongViewModel, modifier: Modifier = Modifier){
             onSend = viewModel::send,
             canUpdateTitle = false,
             onTitleUpdate = viewModel::setTitle,
+            sendSongState = viewModel.sendSongState,
+            resetSendSongState = viewModel::resetSendSongState,
+            closeApp = closeApp,
             modifier = modifier
         )
     }
@@ -114,8 +133,24 @@ fun GenericScreen(
     onSend: () -> Unit,
     canUpdateTitle: Boolean,
     onTitleUpdate: (String) -> Unit,
+    sendSongState: SendSongState,
+    resetSendSongState: () -> Unit,
+    closeApp: () -> Unit,
     modifier: Modifier = Modifier
 ){
+    if(sendSongState != SendSongState.Init){
+        SendDialog(
+            sendSongState = sendSongState,
+            onCloseDialog = {
+                when(sendSongState){
+                    SendSongState.Loading -> {}
+                    SendSongState.Sent -> { closeApp() }
+                    SendSongState.Error -> { resetSendSongState() }
+                    else -> { resetSendSongState() }
+                }
+            }
+        )
+    }
     Column(
         modifier
             .fillMaxSize()
@@ -266,7 +301,9 @@ fun Title(
             singleLine = true,
             textStyle = titleTextStyle,
             enabled = canUpdateTitle,
-            modifier = Modifier.alignBy(LastBaseline).weight(1f)
+            modifier = Modifier
+                .alignBy(LastBaseline)
+                .weight(1f)
         )
         Spacer(Modifier.width(16.dp))
         Text(
@@ -278,11 +315,102 @@ fun Title(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SendDialog(
+    sendSongState: SendSongState,
+    onCloseDialog: () -> Unit,
+    modifier: Modifier = Modifier
+){
+    if(sendSongState == SendSongState.Loading){
+        AlertDialog(onDismissRequest = onCloseDialog, modifier = modifier){
+            LoadingSpinnerDialogContent()
+        }
+        return
+    }
+
+    AlertDialog(
+        icon = {
+            when(sendSongState) {
+                SendSongState.Sent -> Icon(
+                    Icons.Rounded.Done,
+                    contentDescription = "Song sent"
+                )
+                SendSongState.Error -> Icon(
+                    Icons.Rounded.Clear,
+                    contentDescription = "Error"
+                )
+                else -> { }
+            }
+        },
+        title = {
+            val text = when(sendSongState) {
+                SendSongState.Sent -> "Song suggestion sent"
+                SendSongState.Error -> "Error sending song"
+                else -> ""
+            }
+            Text(text)
+        },
+        text = {
+            when(sendSongState) {
+                SendSongState.Sent -> {
+                    Text("The suggestion for the new song has been sent correctly")
+                }
+                SendSongState.Error -> {
+                    Text("An error occurred while sending the suggestion for the new song")
+                }
+                else -> {}
+            }
+        },
+        onDismissRequest = onCloseDialog,
+        confirmButton = {
+            TextButton(
+                onClick = onCloseDialog,
+            ){
+                Text("Ok")
+            }
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun LoadingSpinnerDialogContent(modifier: Modifier = Modifier){
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .padding(16.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = modifier
+                .fillMaxSize()
+                .padding(8.dp)
+        ){
+            Text("Sending song...", Modifier.align(Alignment.CenterHorizontally))
+            Spacer(Modifier.height(16.dp))
+            // TODO add specific time in seconds for loading (lambda timeout + 5)
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+
+
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     CapoeiraSongbookContributorTheme {
-        HighLevelLayout(previewViewModel())
+        HighLevelLayout(
+            previewViewModel(),
+            {}
+        )
     }
 }
 

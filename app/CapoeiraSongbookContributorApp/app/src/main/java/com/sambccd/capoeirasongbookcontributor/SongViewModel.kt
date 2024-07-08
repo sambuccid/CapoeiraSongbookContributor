@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class SongViewModel: ViewModel() {
     private val song = Song()
@@ -16,12 +18,35 @@ class SongViewModel: ViewModel() {
     fun removeLine(lineIndex: Int) { song.removeLine(lineIndex) }
     fun updateBold(lineIndex: Int, newBold: Boolean) { song.updateBold(lineIndex, newBold) }
     fun canSend(): Boolean { return song.canSend() }
-    fun send() { song.send() }
+    fun send() {
+        viewModelScope.launch() {
+            sendSongState = SendSongState.Loading
+            try {
+                SendSongAction().sendSong(song)
+                sendSongState = SendSongState.Sent
+            } catch (e: SongDispatcherException){
+                sendSongState = SendSongState.Error
+            }
+        }
+    }
 
     private var showEnglishScreen by mutableStateOf(false)
     fun swapScreens() { showEnglishScreen = !showEnglishScreen }
     fun isBrazilianScreen() = !showEnglishScreen
     fun isEnglishScreen() = showEnglishScreen
+
+    var sendSongState: SendSongState by mutableStateOf(SendSongState.Init)
+        private set
+    fun resetSendSongState() { sendSongState = SendSongState.Init }
+}
+
+
+
+sealed interface SendSongState {
+    data object Init: SendSongState
+    data object Error : SendSongState
+    data object Loading : SendSongState
+    data object Sent : SendSongState
 }
 
 class Song {
@@ -41,10 +66,8 @@ class Song {
         brLines.updateBold(lineIndex, newBold)
         enLines.updateBold(lineIndex, newBold)
     }
+    // TODO check also title is not empty, and the first br line is not empty(maybe isNotEmtpy can become hasContent and then we check text lenght there)
     fun canSend() = brLines.isNotEmpty()
-    fun send() {
-        SendSongAction().sendSong(this)
-    }
 }
 
 class SongLines {
