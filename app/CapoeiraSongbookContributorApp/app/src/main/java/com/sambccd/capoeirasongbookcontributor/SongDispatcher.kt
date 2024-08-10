@@ -1,15 +1,17 @@
 package com.sambccd.capoeirasongbookcontributor
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
-import java.io.IOException
 import java.io.InputStreamReader
+import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
+import android.util.Base64
 
-class SongDispatcher {
+
+class SongDispatcher(private val connectionTimeout: Int, private val encrypter: Encrypter = Encrypter(BuildConfig.API_PUBLIC_KEY)) {
     suspend fun send(song: SerializedSong){
         withContext(Dispatchers.IO){
             // -----possible http connection code 1------

@@ -17,7 +17,6 @@ class SerializedSong(var songToSerialize: Song) {
         val song = SongData(title=songToSerialize.title, lines=lines)
 
         val serialized = Json.encodeToString(song)
-        println(serialized) // TODO to remove when no longer needed
         return serialized
     }
 }
