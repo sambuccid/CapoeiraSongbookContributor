@@ -39,8 +39,14 @@ export const actualHandler = async (event, envVars, dependencies) => {
   const git = new GitClient(spawnSync, "/tmp", REPO_NAME, REPO_URL);
   const github = new GithubApi(octokit, REPO_OWNER, REPO_NAME);
 
+  console.info("Lambda invoked with body:" + event.body);
+
   const decryptedRequest = decryptText(PRIVATE_KEY, event.body);
+  console.info("Body decrypted:" + decryptedRequest);
   const requestBody = JSON.parse(decryptedRequest);
+  console.info("Body parsed:", requestBody);
+
+  validate(requestBody);
 
   await initialiseRepo(fs, git, { GITHUB_USERNAME, GITHUB_PASSWORD });
 
@@ -93,6 +99,15 @@ async function initialiseRepo(fs, git, credentials) {
     git.checkoutExistingBranch("main");
     git.hardReset("main");
     git.pullRebase();
+  }
+}
+
+function validate(requestBody) {
+  if (requestBody.title == null || requestBody.title == "") {
+    throw new Error("Missing title");
+  }
+  if (requestBody.lines == null || requestBody.lines.length <= 0) {
+    throw new Error("Missing lines");
   }
 }
 

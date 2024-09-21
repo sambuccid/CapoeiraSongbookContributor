@@ -37,7 +37,7 @@ describe("new-song", () => {
   };
   const defaultTestSong = {
     title: "a test song",
-    lines: [],
+    lines: [{ br: "A", en: "A" }],
   };
   const execLambda = async (event, envVars, dependencies) => {
     if (!event) event = createEvent();
@@ -58,6 +58,26 @@ describe("new-song", () => {
       .mockImplementation((key, buffer) => buffer);
     spawnSyncSpy.mockReturnValue({ output: "" });
     fsSpy.stat.mockRejectedValue("Error");
+  });
+
+  describe("validation", () => {
+    it("errors if the song has an empty title", async () => {
+      const execution = execLambdaWithBody({
+        ...defaultTestSong,
+        title: "",
+      });
+
+      await expect(execution).rejects.toThrow("Missing title");
+    });
+
+    it("errors if the song has no lines", async () => {
+      const execution = execLambdaWithBody({
+        ...defaultTestSong,
+        lines: [],
+      });
+
+      await expect(execution).rejects.toThrow("Missing lines");
+    });
   });
 
   describe("creation of new song file", () => {
