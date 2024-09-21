@@ -23,7 +23,7 @@ class SongDispatcher(private val connectionTimeout: Int, private val encrypter: 
                 if(!isSuccessfulResponseCode(responseCode)){
                     throw SongDispatcherException("Error in response: $response")
                 }
-            } catch (e: Exception) { // TODO maybe catch a subset of exceptions and not all of them (need to check best practices)
+            } catch (e: Exception) {
                 throw SongDispatcherException(e)
             }
         }

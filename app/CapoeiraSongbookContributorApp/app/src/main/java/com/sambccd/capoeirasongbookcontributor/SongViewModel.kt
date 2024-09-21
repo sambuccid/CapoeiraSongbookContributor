@@ -67,8 +67,7 @@ class Song {
         brLines.updateBold(lineIndex, newBold)
         enLines.updateBold(lineIndex, newBold)
     }
-    // TODO check also title is not empty, and the first br line is not empty(maybe isNotEmtpy can become hasContent and then we check text lenght there)
-    fun canSend() = brLines.isNotEmpty()
+    fun canSend() = title.isNotEmpty() && brLines.hasContent()
 }
 
 class SongLines {
@@ -91,7 +90,7 @@ class SongLines {
         lines.add(SongLine())
     }
 
-    fun isNotEmpty() = !lines.isEmpty()
+    fun hasContent() = lines.isNotEmpty() && lines.map(SongLine::str).joinToString(separator = "").isNotEmpty()
 }
 
 data class SongLine(var str: String = "", var bold: Boolean = false){

@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sambccd.capoeirasongbookcontributor.SendSongAction.Companion.CONNECTION_TIMEOUT
 import com.sambccd.capoeirasongbookcontributor.ui.theme.CapoeiraSongbookContributorTheme
 
 class MainActivity : ComponentActivity() {
@@ -391,17 +392,20 @@ fun LoadingSpinnerDialogContent(modifier: Modifier = Modifier){
         ){
             Text("Sending song...", Modifier.align(Alignment.CenterHorizontally))
             Spacer(Modifier.height(16.dp))
-            // TODO add specific time in seconds for loading (constant CONNECTION_TIMEOUT)
-            CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.secondary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            CircularProgressIndicatorInTime(Modifier.align(Alignment.CenterHorizontally))
         }
     }
 }
 
-
+@Composable
+fun CircularProgressIndicatorInTime(modifier: Modifier){
+    // TODO add specific time in seconds for loading (constant CONNECTION_TIMEOUT)
+    CircularProgressIndicator(
+        color = MaterialTheme.colorScheme.secondary,
+        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = modifier
+    )
+}
 
 @Preview(showBackground = true)
 @Composable
