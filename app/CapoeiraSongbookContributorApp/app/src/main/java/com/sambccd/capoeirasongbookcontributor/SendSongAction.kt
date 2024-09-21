@@ -1,7 +1,10 @@
 package com.sambccd.capoeirasongbookcontributor
 
-class SendSongAction(private var songDispatcher: SongDispatcher = SongDispatcher()) {
-    // TODO dispatcher might need to be created outside, or it might need an http client as input
+class SendSongAction(private val songDispatcher: SongDispatcher = SongDispatcher(SendSongAction.CONNECTION_TIMEOUT)) {
+    companion object {
+        const val CONNECTION_TIMEOUT = 45
+    }
+
     suspend fun sendSong(song: Song){
         val serializedSong = SerializedSong(song)
         this.songDispatcher.send(serializedSong)

@@ -391,7 +391,7 @@ fun LoadingSpinnerDialogContent(modifier: Modifier = Modifier){
         ){
             Text("Sending song...", Modifier.align(Alignment.CenterHorizontally))
             Spacer(Modifier.height(16.dp))
-            // TODO add specific time in seconds for loading (lambda timeout + 5)
+            // TODO add specific time in seconds for loading (constant CONNECTION_TIMEOUT)
             CircularProgressIndicator(
                 color = MaterialTheme.colorScheme.secondary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,

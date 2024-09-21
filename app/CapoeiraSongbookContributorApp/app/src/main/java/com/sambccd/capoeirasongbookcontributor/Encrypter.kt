@@ -21,7 +21,6 @@ class Encrypter(private val publicKey: String, private val strippedPrivateKey: S
         val keySpec = X509EncodedKeySpec(publicBytes)
         val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
         val pubKey: PublicKey = keyFactory.generatePublic(keySpec)
-//        val cipher: Cipher = Cipher.getInstance("RSA/ECB/PKCS1PADDING")
         val cipher: Cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
         cipher.init(Cipher.ENCRYPT_MODE, pubKey)
         val encrypted = cipher.doFinal(txt.toByteArray())
@@ -30,8 +29,6 @@ class Encrypter(private val publicKey: String, private val strippedPrivateKey: S
     }
 
     fun decrypt(data: String): String {
-
-//        val usablePublicKey = stripPublicKey(this.publicKey)
         if(this.strippedPrivateKey == null) throw Exception("Need to pass private key to decrypt")
 
         return decryptData(data, this.strippedPrivateKey)

@@ -25,6 +25,7 @@ class SongViewModel: ViewModel() {
                 SendSongAction().sendSong(song)
                 sendSongState = SendSongState.Sent
             } catch (e: SongDispatcherException){
+                e.printStackTrace()
                 sendSongState = SendSongState.Error
             }
         }
