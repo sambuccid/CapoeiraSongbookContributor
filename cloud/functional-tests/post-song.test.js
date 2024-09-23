@@ -48,6 +48,25 @@ describe("POST /song", () => {
     });
   }, 40000);
 
+  it("supports very long text", async () => {
+    const longLine =
+      "Long line 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
+    const response = await callLambdaWith({
+      dryRun: true,
+      title: "Test title long",
+      lines: [{ br: longLine, en: "test", bold: true }],
+    });
+
+    const respData = await response.text();
+    const respStatus = response.status;
+
+    expect(respStatus).toBe(200);
+    expect(JSON.parse(respData)).toMatchObject({
+      title: "Test title long",
+      lines: [{ br: longLine, en: "test", bold: true }],
+    });
+  }, 40000);
+
   it.skip("creates a new branch", async () => {
     const { data: branchesBefore } = await octokit.request(
       "GET /repos/{owner}/{repo}/branches",

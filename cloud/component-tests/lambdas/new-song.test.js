@@ -341,6 +341,39 @@ describe("new-song", () => {
         )
       );
     });
+    it("supports multiple chunks of encrypted data", async () => {
+      // Simulating what android application does for long data
+      const json = `{"lines":[{}],"title":"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"}`;
+      const chunks = [json.slice(0, 150), json.slice(150)];
+      const finalBody = chunks.map(simulateEncrypt).join("|");
+      const event = {
+        body: finalBody,
+      };
+
+      const envVars = {
+        PRIVATE_KEY: "test-private-key",
+      };
+
+      await execLambda(event, envVars);
+
+      expect(privateDecryptSpy).toHaveBeenCalledTimes(2);
+      expect(privateDecryptSpy).toHaveBeenCalledWith(
+        {
+          key: "test-private-key",
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: "sha256",
+        },
+        Buffer.from(chunks[0])
+      );
+      expect(privateDecryptSpy).toHaveBeenCalledWith(
+        {
+          key: "test-private-key",
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: "sha256",
+        },
+        Buffer.from(chunks[1])
+      );
+    });
   });
 
   describe("Response", () => {
