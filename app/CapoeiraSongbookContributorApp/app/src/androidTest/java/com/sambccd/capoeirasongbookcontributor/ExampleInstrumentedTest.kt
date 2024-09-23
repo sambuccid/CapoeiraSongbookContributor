@@ -61,5 +61,17 @@ class ExampleInstrumentedTest {
         assertEquals(song, decrypted)
     }
 
+    @Test
+    fun encrypt_decrypts_long_text_correctly() {
+        // To run the tests populate this with private key, all in one line, and without start and end lines(e.g. remove ------Privatekey blablabla----)
+        val usablePrivateKey = ""
+        val song = """123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"""
 
+        val encrypter = Encrypter(BuildConfig.API_PUBLIC_KEY, usablePrivateKey)
+        val encrypted = encrypter.encrypt(song)
+
+        val decrypted = encrypter.decrypt(encrypted)
+
+        assertEquals(song, decrypted)
+    }
 }

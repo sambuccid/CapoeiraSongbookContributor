@@ -10,9 +10,15 @@ import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
 
 class Encrypter(private val publicKey: String, private val strippedPrivateKey: String? = null) {
+    companion object {
+        const val SEPARATOR = "|"
+    }
     fun encrypt(requestData: String): String {
         val usablePublicKey = stripPublicKey(this.publicKey)
-        val encrypted = encryptData(requestData, usablePublicKey)
+        // Splits in blocks of text that is under 256 bytes, encrypts each text and then concatenates it with separator |
+        val requestDataChunks = splitInChunks(requestData)
+        val encrypted = requestDataChunks.map { encryptData(it, usablePublicKey)}.joinToString(separator = SEPARATOR)
+
         return removeNewLines(encrypted)
     }
 
@@ -31,7 +37,11 @@ class Encrypter(private val publicKey: String, private val strippedPrivateKey: S
     fun decrypt(data: String): String {
         if(this.strippedPrivateKey == null) throw Exception("Need to pass private key to decrypt")
 
-        return decryptData(data, this.strippedPrivateKey)
+        // Splits in blocks of text with the separator |, decrypts each text and then concatenates it
+        val dataChunks = data.split(SEPARATOR)
+        val decrypted = dataChunks.map { decryptData(it, this.strippedPrivateKey)}.joinToString(separator = "")
+
+        return decrypted
     }
 
     private fun decryptData(txtBase64: String, pk: String): String {
@@ -55,6 +65,10 @@ class Encrypter(private val publicKey: String, private val strippedPrivateKey: S
         val encryptedBytes = md.digest(input)
         val encoded = String(Base64.encode(encryptedBytes, Base64.DEFAULT))
         return encoded
+    }
+
+    private fun splitInChunks(s: String): List<String>{
+        return s.chunked(150)
     }
 
     private fun stripPublicKey(publicKey: String): String{

@@ -11,6 +11,9 @@
       <SelectionState runConfigName="decrypt_correctly()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
+      <SelectionState runConfigName="encrypt_decrypts_long_text_correctly()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
     </selectionStates>
   </component>
 </project>
