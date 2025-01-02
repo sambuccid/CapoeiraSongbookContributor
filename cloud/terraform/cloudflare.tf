@@ -23,33 +23,51 @@ variable "domain" {
   default = "capoeriasongbookcontributor.cc"
 }
 
-//resource "cloudflare_record" "root" {
-//  zone_id = var.zone_id
-//  name    = "@"
-//  value   = "142.250.179.174"
-//  type    = "A"
-//  proxied = true
-//}
-
-resource "cloudflare_record" "www" {
+resource "cloudflare_record" "api" {
   zone_id = var.zone_id
-  name    = "www"
-  value   = "142.250.179.174"
-  type    = "A"
+  name    = "api"
+  value   = "d-alyavf0di6.execute-api.eu-west-2.amazonaws.com"
+  type    = "CNAME"
   proxied = true
 }
 
+resource "cloudflare_ruleset" "rate_limiting" {
+  zone_id     = var.zone_id
+  name        = "Rate limiting for my zone"
+  description = ""
+  kind        = "zone"
+  phase       = "http_ratelimit"
 
-// TODO check if capoeriasongbookcontributor.cc is reachable
+  rules {
+    ref         = "rate_limit_api_requests_ip"
+    description = "Rate limit API requests by IP"
+    expression  = "(http.request.uri.path wildcard \"*\")"
+    action      = "block"
+    ratelimit {
+      characteristics = ["cf.colo.id", "ip.src"]
+      period = 10
+      requests_per_period = 1
+      mitigation_timeout = 10
+    }
+  }
+}
 
-// TODO Add WAF -> Rate Limiting rule (don't need to create any other resource in theory)
+resource "cloudflare_zone_settings_override" "encript-backend-traffic" {
+  zone_id = var.zone_id
 
-// TODO Test if rate limiting is working
+  settings {
+    ssl = "strict"
+  }
+}
 
-// TODO add redirection rule "Cloudflare rules -> Redirection rules -> Signle redirection"
 
-// TODO test new endpoint is working correctly
+// TODO check if is working on phones
 
-// TODO have been following this:
-// https://developers.cloudflare.com/terraform/tutorial/initialize-terraform/
-// But not sure if we need something different than this
+// TODO need to re-apply all the steps done manually in AWS to cloudformation and update values here
+//    and probably before we need to undo the ones done manually
+//    Look at todo inside cloudformation.yml
+
+// TODO change functional tests to point to new endpoint
+//     Or at least add new test using new endpoint
+
+// TODO move all terraform state to new PC

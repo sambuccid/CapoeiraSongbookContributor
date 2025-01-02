@@ -119,3 +119,17 @@ Outputs:
         - !Ref AWS::Region
         - .
         - !Ref AWS::URLSuffix
+
+# TODO replicate in cloudformation and remove manual changes done in AWS for setting up cloudflare connection:
+#   The tutorial followed is: https://carocci-eugenio.medium.com/connect-cloudflare-to-aws-api-gateway-18e961a6e24f
+# Create(or reuse same) certificate generated in Cloudflare
+# Import certificate generated inside cloudflare into AWS Certificate Manager
+#   Certificate chain of cloudflare is in this page: https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/#cloudflare-origin-ca-root-certificate
+#     The "Cloudflare Origin RSA PEM" Link
+# Define a custom domain name in API Gateway for the clouflare domain
+# Configure the API Mapping for the Custom Domain Name created
+#   Just select the api and the stage for this, leaving the path as blank
+# Find and copy the "API Gateway Domain Name" created for this Custom Domain Name
+# In Cloudflare we need to use this value to set a CNAME pointing at API Gateway
+# In cloudflare set the SSL to full (or even full strict) (it makes sure to use the certificate to endript traffic towards api gateway)
+#   Already done in terraform
