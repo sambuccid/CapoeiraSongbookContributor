@@ -61,14 +61,26 @@ resource "cloudflare_zone_settings_override" "encript-backend-traffic" {
 
   settings {
     ssl = "strict"
+    always_use_https = "on"
   }
 }
 
+resource "cloudflare_ruleset" "cache_rules" {
+  zone_id     = var.zone_id
+  name        = "Cache settings"
+  description = "Set cache settings for incoming requests"
+  kind        = "zone"
+  phase       = "http_request_cache_settings"
+
+  rules {
+    ref         = "cache_settings"
+    description = "Cache settings for all requests"
+    expression  = true
+    action      = "set_cache_settings"
+    action_parameters {
+      cache = false
+    }
+  }
+}
 
 // TODO check if is working on phones
-
-// TODO change functional tests to point to new endpoint
-//     Or at least add new test using new endpoint
-
-// TODO move all terraform state to new PC
-//    we tried to move it, we need to test if it worked
