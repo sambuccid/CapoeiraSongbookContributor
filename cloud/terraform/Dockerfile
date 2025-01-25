@@ -1,4 +1,4 @@
-FROM hashicorp/terraform:latest  
+FROM docker.io/hashicorp/terraform:latest
 
 WORKDIR /terraform
 

@@ -11,6 +11,10 @@ provider "cloudflare" {
   # token pulled from $CLOUDFLARE_API_TOKEN
 }
 
+variable "API_GATEWAY_DOMAIN_NAME" {
+  type = string
+}
+
 variable "zone_id" {
   default = "8d6c9ac777a597c964fe1974076c7505"
 }
@@ -26,7 +30,7 @@ variable "domain" {
 resource "cloudflare_record" "api" {
   zone_id = var.zone_id
   name    = "api"
-  value   = "d-alyavf0di6.execute-api.eu-west-2.amazonaws.com"
+  content   = var.API_GATEWAY_DOMAIN_NAME
   type    = "CNAME"
   proxied = true
 }
@@ -62,11 +66,6 @@ resource "cloudflare_zone_settings_override" "encript-backend-traffic" {
 
 
 // TODO check if is working on phones
-
-// TODO we'll need to find a way of passing as imput the url of api gatweway to use for the dns record
-//   Extract the token of cloudflare in separate specific file
-//   create script that creates a cloudflare-env file automatically with the token and the api gateway name url
-//   use the script also inside "deploy-terraform.sh"
 
 // TODO change functional tests to point to new endpoint
 //     Or at least add new test using new endpoint
