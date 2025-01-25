@@ -1,1 +1,1 @@
-docker run --env-file ../.credentials/cloudflare-env --rm -v $(pwd):/terraform terraform-docker show
+podman run --env-file ../.credentials/cloudflare-env --rm -v $(pwd):/terraform terraform-docker show

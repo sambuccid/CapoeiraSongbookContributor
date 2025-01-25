@@ -63,11 +63,13 @@ resource "cloudflare_zone_settings_override" "encript-backend-traffic" {
 
 // TODO check if is working on phones
 
-// TODO need to re-apply all the steps done manually in AWS to cloudformation and update values here
-//    and probably before we need to undo the ones done manually
-//    Look at todo inside cloudformation.yml
+// TODO we'll need to find a way of passing as imput the url of api gatweway to use for the dns record
+//   Extract the token of cloudflare in separate specific file
+//   create script that creates a cloudflare-env file automatically with the token and the api gateway name url
+//   use the script also inside "deploy-terraform.sh"
 
 // TODO change functional tests to point to new endpoint
 //     Or at least add new test using new endpoint
 
 // TODO move all terraform state to new PC
+//    we tried to move it, we need to test if it worked

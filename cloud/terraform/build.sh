@@ -1,1 +1,1 @@
-docker build -t terraform-docker .
+podman build -t terraform-docker .

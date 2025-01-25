@@ -1,1 +1,1 @@
-docker run --env-file ../.credentials/cloudflare-env --rm -v $(pwd):/terraform terraform-docker apply --auto-approve
+podman run --env-file ../.credentials/cloudflare-env --rm -v $(pwd):/terraform terraform-docker apply --auto-approve
