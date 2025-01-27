@@ -82,5 +82,3 @@ resource "cloudflare_ruleset" "cache_rules" {
     }
   }
 }
-
-// TODO check if is working on phones

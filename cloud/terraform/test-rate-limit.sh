@@ -1,4 +1,4 @@
-# curl www.capoeriasongbookcontributor.cc
+
 for i in {1..100}
 do
   status=$(curl -s -o /dev/null -w "%{http_code}" api.capoeriasongbookcontributor.cc)
