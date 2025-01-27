@@ -2,7 +2,8 @@ import fs from "fs/promises";
 import { Octokit } from "octokit";
 import { encryptText } from "../lambdas/lib/encryptDecrypt.js";
 
-const apiUrl = await fs.readFile("./.credentials/api_url.txt");
+// const apiUrl = await fs.readFile("./.credentials/api_url.txt");
+const apiUrl = 'https://api.capoeriasongbookcontributor.cc'
 const ENDPOINT = "song";
 
 const publicKey = await fs.readFile("./.credentials/public_key.txt");
@@ -30,6 +31,11 @@ describe("POST /song", () => {
 
     return response;
   }
+
+  beforeEach(async ()=>{
+    // Always wait 10 seconds before tests to overcome rate limiting
+    await new Promise(resolve => setTimeout(resolve, 10000))
+  }, 10001)
 
   it("returns the correct data", async () => {
     const response = await callLambdaWith({
