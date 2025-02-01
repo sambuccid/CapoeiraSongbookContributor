@@ -105,7 +105,7 @@ describe("new-song", () => {
         spawnSyncInRepoDirectory
       );
     });
-    it("populates the file correctly", async () => {
+    it("populates the file correctly with formatted json", async () => {
       await execLambdaWithBody({
         title: "A new Test song",
         lines: [
@@ -114,19 +114,38 @@ describe("new-song", () => {
           { br: "", en: "" },
           { br: "Bold line br", en: "Bold line en", bold: true },
         ],
+        author: "Test author"
       });
 
       expect(fsSpy.writeFile).toHaveBeenCalledWith(
         expect.anything(),
-        JSON.stringify({
-          title: "A new Test song",
-          lines: [
-            { br: "Test line 1 in brazilian", en: "Test line 1 in english" },
-            { br: "Test line 2 in brazilian", en: "Test line 2 in english" },
-            { br: "", en: "" },
-            { br: "Bold line br", en: "Bold line en", bold: true },
-          ],
-        }),
+        `{ "title": "A new Test song",
+  "author": "Test author",
+  "lines": [
+    { "br": "Test line 1 in brazilian", "en": "Test line 1 in english" },
+    { "br": "Test line 2 in brazilian", "en": "Test line 2 in english" },
+    { "br": "", "en": "" },
+    { "br": "Bold line br", "en": "Bold line en", "bold": true }
+  ]
+}`,
+        expect.anything()
+      );
+    });
+    it("populates the file correctly with author", async () => {
+      await execLambdaWithBody({
+        title: "A new Test song",
+        lines: [
+          { br: "Test line 1 in brazilian", en: "Test line 1 in english" },
+          { br: "Test line 2 in brazilian", en: "Test line 2 in english" },
+          { br: "", en: "" },
+          { br: "Bold line br", en: "Bold line en", bold: true },
+        ],
+        author: "Test author"
+      });
+
+      expect(fsSpy.writeFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.stringMatching(/"author": *"Test author"/),
         expect.anything()
       );
     });
@@ -397,12 +416,12 @@ describe("new-song", () => {
       expect(returnValues).toMatchObject({
         isBase64Encoded: false,
         statusCode: 200,
-        headers: { "content-type": "text/plain" },
-        body: JSON.stringify({
-          ...defaultTestSong,
-          title: "song with a test title",
-          lines: [{ br: "line1br", en: "line1en" }],
-        }),
+        headers: { "content-type": "text/plain" }
+      });
+      expect(JSON.parse(returnValues.body)).toMatchObject({
+        ...defaultTestSong,
+        title: "song with a test title",
+        lines: [{ br: "line1br", en: "line1en" }],
       });
     });
   });

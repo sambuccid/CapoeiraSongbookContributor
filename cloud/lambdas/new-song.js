@@ -114,13 +114,25 @@ function validate(requestBody) {
 function createFileContent(requestBody) {
   const content = {
     title: requestBody.title,
+    author: requestBody.author,
     lines: requestBody.lines.map((line) => ({
       br: line.br,
       en: line.en,
       bold: line.bold,
     })),
   };
-  return JSON.stringify(content);
+  return formatFileContent(content);
+}
+
+function formatFileContent(objectContent){
+  let formatted = JSON.stringify(objectContent, null, 2)
+  formatted = formatted.replace(/{(\s*)"title"/, `{ "title"`)
+  formatted = formatted.replaceAll(/{\s*"br"/g, `{ "br"`)
+  formatted = formatted.replaceAll(/,\s*"en"/g, `, "en"`)
+  formatted = formatted.replaceAll(/"en": *"(.*)"\s*}/g, `"en": "$1" }`)
+  formatted = formatted.replaceAll(/,\s*"bold"/g, `, "bold"`)
+  formatted = formatted.replaceAll(/"bold": *(.*)\s*}/g, `"bold": $1 }`)
+  return formatted;
 }
 
 async function createSongFile(fs, gitRepoFolder, title, data) {
