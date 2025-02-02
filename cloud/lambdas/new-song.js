@@ -22,6 +22,7 @@ const ENV_VARS = {
   GITHUB_USERNAME: process.env.GITHUB_USERNAME,
   GITHUB_PASSWORD: process.env.GITHUB_PASSWORD,
   PRIVATE_KEY: process.env.PRIVATE_KEY,
+  DISABLE_ENCRYPTION: process.env.DISABLE_ENCRYPTION,
 };
 
 const DEPENDENCIES = {
@@ -34,16 +35,19 @@ const DEPENDENCIES = {
 export const handler = (event) => actualHandler(event, ENV_VARS, DEPENDENCIES);
 
 export const actualHandler = async (event, envVars, dependencies) => {
-  const { GITHUB_USERNAME, GITHUB_PASSWORD, PRIVATE_KEY } = envVars;
+  const { GITHUB_USERNAME, GITHUB_PASSWORD, PRIVATE_KEY, DISABLE_ENCRYPTION } = envVars;
   const { octokit, spawnSync, fs, decryptText } = dependencies;
   const git = new GitClient(spawnSync, "/tmp", REPO_NAME, REPO_URL);
   const github = new GithubApi(octokit, REPO_OWNER, REPO_NAME);
 
   console.info("Lambda invoked with body:" + event.body);
 
-  const decryptedRequest = decryptText(PRIVATE_KEY, event.body);
-  console.info("Body decrypted:" + decryptedRequest);
-  const requestBody = JSON.parse(decryptedRequest);
+  let plainRequest = event.body
+  if(DISABLE_ENCRYPTION !== 'true'){
+    plainRequest = decryptText(PRIVATE_KEY, event.body);
+    console.info("Body decrypted:" + plainRequest);
+  }
+  const requestBody = JSON.parse(plainRequest);
   console.info("Body parsed:", requestBody);
 
   validate(requestBody);

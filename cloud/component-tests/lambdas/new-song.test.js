@@ -6,10 +6,17 @@ import { actualHandler as lambda } from "../../lambdas/new-song.js";
 function simulateEncrypt(text) {
   return Buffer.from(text).toString("base64");
 }
-function createEvent(body) {
+function createEncryptedEvent(body) {
   let processedBody = body ?? {};
   processedBody = JSON.stringify(processedBody);
   processedBody = simulateEncrypt(processedBody);
+  return {
+    body: processedBody,
+  };
+}
+function createUnencryptedEvent(body) {
+  let processedBody = body ?? {};
+  processedBody = JSON.stringify(processedBody);
   return {
     body: processedBody,
   };
@@ -40,16 +47,16 @@ describe("new-song", () => {
     lines: [{ br: "A", en: "A" }],
   };
   const execLambda = async (event, envVars, dependencies) => {
-    if (!event) event = createEvent();
+    if (!event) event = createEncryptedEvent();
     envVars = { ...testEnvVars, ...envVars };
     dependencies = { ...testDependencies, ...dependencies };
     return await lambda(event, envVars, dependencies);
   };
   const execLambdaWithBody = async (body, envVars, dependencies) =>
-    execLambda(createEvent(body), envVars, dependencies);
+    execLambda(createEncryptedEvent(body), envVars, dependencies);
 
   const execLambdaWithDefaultSong = async (envVars, dependencies) =>
-    execLambda(createEvent(defaultTestSong), envVars, dependencies);
+    execLambda(createEncryptedEvent(defaultTestSong), envVars, dependencies);
 
   let privateDecryptSpy;
   beforeEach(() => {
@@ -335,7 +342,7 @@ describe("new-song", () => {
 
   describe("cryptography", () => {
     it("decrypts the data in input", async () => {
-      const event = createEvent({
+      const event = createEncryptedEvent({
         ...defaultTestSong,
         prop: "Encrypted test",
       });
@@ -393,6 +400,20 @@ describe("new-song", () => {
         Buffer.from(chunks[1])
       );
     });
+    it("does not decrypt data in input if it's disabled", async ()=>{
+      const event = createUnencryptedEvent({
+        ...defaultTestSong,
+        prop: "Unencrypted test",
+      });
+
+      const envVars = {
+        DISABLE_ENCRYPTION: "true"
+      };
+
+      await execLambda(event, envVars);
+
+      expect(privateDecryptSpy).not.toHaveBeenCalled()
+    })
   });
 
   describe("Response", () => {

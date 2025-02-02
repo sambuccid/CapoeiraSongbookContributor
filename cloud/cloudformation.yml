@@ -29,6 +29,7 @@ Resources:
           GITHUB_USERNAME: !Ref GithubUsername
           GITHUB_PASSWORD: !Ref GithubPassword
           PRIVATE_KEY: !Ref PrivateKey
+          DISABLE_ENCRYPTION: true
 
   # Creates an HTTP API for our Lambda function.
   HttpApi:
@@ -37,6 +38,7 @@ Resources:
     Properties:
       Name: capoeira-songbook-contributor
       ProtocolType: HTTP
+      DisableExecuteApiEndpoint: true # Disabled to avoid having to use manual encryption in lambda
   HttpApiIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:

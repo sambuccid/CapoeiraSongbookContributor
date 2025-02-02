@@ -5,6 +5,7 @@ import { encryptText } from "../lambdas/lib/encryptDecrypt.js";
 // const apiUrl = await fs.readFile("./.credentials/api_url.txt");
 const apiUrl = 'https://api.capoeriasongbookcontributor.cc'
 const ENDPOINT = "song";
+const ENCRIPTION_DISABLED = true
 
 const publicKey = await fs.readFile("./.credentials/public_key.txt");
 const githubPassword = (
@@ -21,12 +22,13 @@ describe("POST /song", () => {
   // TODO something for clean up? maybe based on branch and pr name? (that could contain name of song sent in tests)
 
   async function callLambdaWith(data) {
-    const requestBody = JSON.stringify(data);
-    const encryptedBody = encryptText(publicKey, requestBody);
-
+    let body = JSON.stringify(data);
+    if(ENCRIPTION_DISABLED == false){
+      body = encryptText(publicKey, body);
+    }
     const response = await fetch(endpoint_url, {
       method: "POST",
-      body: encryptedBody,
+      body: body,
     });
 
     return response;
