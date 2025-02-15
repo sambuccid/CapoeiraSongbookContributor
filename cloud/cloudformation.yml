@@ -38,6 +38,11 @@ Resources:
     Properties:
       Name: capoeira-songbook-contributor
       ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - http://localhost:8080
+          - https://cortinacapoeira.github.io
+        MaxAge: 86400
       DisableExecuteApiEndpoint: true # Disabled to avoid having to use manual encryption in lambda
   HttpApiIntegration:
     Type: AWS::ApiGatewayV2::Integration
