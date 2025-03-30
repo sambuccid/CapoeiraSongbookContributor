@@ -156,6 +156,21 @@ describe("new-song", () => {
         expect.anything()
       );
     });
+    it("doesn't copy bold property when it's false", async () => {
+      await execLambdaWithBody({
+        title: "A new Test song",
+        lines: [
+          { br: "Non bold line br", en: "Non bold line en", bold: false },
+          { br: "Bold line br", en: "Bold line en", bold: true },
+        ]
+      });
+
+      expect(fsSpy.writeFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.not.stringMatching(/"bold": *false/),
+        expect.anything()
+      );
+    });
     it("appends suffix to title if file with same name exists", async () => {
       fsSpy.writeFile.mockImplementation((fileName) => {
         if (fileName.includes("song-with-test.json"))

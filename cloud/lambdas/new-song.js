@@ -122,7 +122,7 @@ function createFileContent(requestBody) {
     lines: requestBody.lines.map((line) => ({
       br: line.br,
       en: line.en,
-      bold: line.bold,
+      bold: line.bold? true : undefined,
     })),
   };
   return formatFileContent(content);
